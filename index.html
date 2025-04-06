@@ -64,7 +64,7 @@
             z-index: 10; pointer-events: none;
         }
         #zoom-info { bottom: 10px; left: 10px; }
-        #efficiency-info { /* Styling für Effizienz-Anzeige mit Bar */
+        #efficiency-info { /* Styling für Glättungs-Anzeige mit Bar */
             top: 10px; right: 10px;
             display: flex; align-items: center; gap: 8px;
         }
@@ -87,7 +87,6 @@
          .gitter-button:disabled {
              opacity: 0.5; cursor: not-allowed;
          }
-         /* NEU: Styling für Score-Bereich Hintergrund */
          #score-area {
              transition: background-color 0.5s ease-out;
          }
@@ -126,19 +125,17 @@
             <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
                 <h2 class="text-xl font-semibold mb-3 text-indigo-300">Interaktives Gittermodell (Raumzeit)</h2>
                 <div id="gittermodell-container">
-                    <div id="zoom-info">Zoom: 1.0x | Modus: Standard | Λ(t)=1.00</div>
-                    <div id="efficiency-info">Effizienz: 0%</div> </div>
+                    <div id="zoom-info">Zoom: 1.0x | Modus: Standard | Λ(t)=0.75</div>
+                    <div id="efficiency-info">Glättung: 25%</div> </div>
                 <div id="gitter-controls" class="mt-4 flex flex-col items-center gap-2">
                      <div class="flex flex-wrap gap-2 justify-center">
                         <button id="toggle-noncom" class="gitter-button bg-purple-600 hover:bg-purple-700">Nicht-Kommutativität</button>
                         <button id="add-mass" class="gitter-button bg-green-600 hover:bg-green-700">"Masse" Hinzufügen</button>
                         </div>
                     <div class="mt-4 w-full max-w-xs">
-                         <label for="lambda-slider" class="block text-sm font-medium text-indigo-300 mb-1 text-center">Dunkle Energie Λ(t): <span id="lambda-value">1.00</span></label>
-                         <input type="range" id="lambda-slider" min="0" max="1" value="1" step="0.05" class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer">
-                         <div class="flex justify-between text-xs text-gray-500 mt-1 px-1">
-                             <span>Kontraktion</span>
-                             <span>Standard</span>
+                         <label for="lambda-slider" class="block text-sm font-medium text-indigo-300 mb-1 text-center">Dunkle Energie Λ(t): <span id="lambda-value">0.75</span></label> <input type="range" id="lambda-slider" min="0" max="1" value="0.75" step="0.05" class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer"> <div class="flex justify-between text-xs text-gray-500 mt-1 px-1">
+                             <span>Frühes Universum</span>
+                             <span>Heute</span>
                          </div>
                          <button id="lambda-runback" class="gitter-button bg-blue-600 hover:bg-blue-700 w-full mt-2">Starte Λ(t) Rücklauf</button>
                     </div>
@@ -157,7 +154,7 @@
         self.G = 6.67430e-11
         self.hbar = 1.0545718e-34
         self.planck_length = 1.616e-35
-        self.dark_energy = 1.0 # Lambda(t) Parameter
+        self.dark_energy = 0.75 # Lambda(t) Parameter - Startwert angepasst
 
     def update(self, rules):
         # ... (Update Logik basierend auf Regeln) ...
@@ -261,9 +258,9 @@
         self.dark_energy = lambda_t
         # Vereinfachte Kosmo-Simulation: Expansion skaliert mit lambda_t
         expansion_rate = self.c * lambda_t
-        # Glattheitseffekt: Niedrigeres Lambda erhöht Glätte
-        smoothness_factor = 1 - lambda_t;
-        print(f"Dunkle Energie angepasst: Λ(t) von {old_lambda.toFixed(2)} zu {lambda_t.toFixed(2)}, Expansion ≈ {expansion_rate.toExponential(2)} m/s, Glättungsfaktor: {smoothness_factor.toFixed(2)} (LOD?)");
+        # Glattheitseffekt: Niedrigeres Lambda erhöht Glätte (im Sinne von weniger Chaos/Rauschen)
+        smoothness_factor = 1 - lambda_t; # Höher bei niedrigem Lambda
+        print(f"Dunkle Energie angepasst: Λ(t) von {old_lambda.toFixed(2)} zu {lambda_t.toFixed(2)}, Expansion ≈ {expansion_rate.toExponential(2)} m/s, Optimierungsfaktor (1-Λ): {smoothness_factor.toFixed(2)}");
         return True
 
 # --- Pseudo-Code Ende ---
@@ -317,8 +314,7 @@
             { id: 'maldacena', title: 'AdS/CFT-Korrespondenz (Holografie)', category: 'Stringtheorie', description: 'Die AdS/CFT-Korrespondenz (Maldacena-Dualität) zeigt mathematisch, dass eine Quantengravitationstheorie in einem höherdimensionalen Raum (Anti-de-Sitter) äquivalent zu einer Quantenfeldtheorie ohne Gravitation auf dessen Rand sein kann. Ein starker Hinweis auf das holografische Prinzip.', quote: '„The AdS/CFT duality suggests that the universe could be a hologram encoded on its boundary.“ (Sinngemäß, Maldacena, 1998)', source: 'J. Maldacena (1998)', scale: 8, relevance: 0.9 },
             { id: 'planck', title: 'Planck-Skala & Diskretheit', category: 'Raumzeitstruktur', description: 'Unterhalb der Planck-Länge (ca. 10⁻³⁵ m) und Planck-Zeit verlieren unsere aktuellen Physikmodelle (insb. die Beschreibung einer glatten Raumzeit) ihre Gültigkeit. Theorien wie die Schleifenquantengravitation postulieren eine fundamental diskrete ("gekörnte") Struktur der Raumzeit auf dieser Ebene.', quote: '„Below the Planck scale, the concept of spacetime itself may break down into something more fundamental, possibly discrete.“ (Konzept aus Quantengravitationstheorien)', source: 'Quantengravitationsforschung', scale: 6, relevance: 0.7 },
             { id: 'quanten', title: 'Quanten-Zufall & Messproblem', category: 'Quantenmechanik', description: 'Quantenereignisse scheinen fundamental zufällig zu sein (z.B. radioaktiver Zerfall). Der Zustand eines Systems wird erst durch Messung festgelegt ("Kollaps der Wellenfunktion"). Dies erinnert an Systeme, bei denen Zustände nur bei Bedarf berechnet werden ("lazy evaluation") oder auf Pseudozufallsgeneratoren basieren.', quote: '„The outcome of a quantum measurement is probabilistic, governed by the Born rule.“ (Grundprinzip der QM)', source: 'Quantenmechanik Standardmodell', scale: 6, relevance: 0.6 },
-            // UPDATE 'desi' Indiz
-            { id: 'desi', title: 'Dynamische Dunkle Energie (DESI) & Glattheit', category: 'Dunkle Energie', description: 'DESI-Daten deuten auf eine abnehmende Dunkle Energie (Λ(t)) hin, im Gegensatz zu einem konstanten Wert. Dies könnte ein "Hotfix" oder eine LOD-Optimierung in einer Simulation sein – weniger Expansion, weniger zu rendern. Zusammen mit der verdächtigen Glattheit der Raumzeit (Holometer, Torsionswaagen) könnte dies auf eine Engine hindeuten, die Ressourcen effizient anpasst.', quote: '„Dark energy might decrease over time, hinting at a dynamic parameter tweak – paired with spacetime’s eerie smoothness, it suggests optimization.“ (Frei nach DESI, ergänzt um Glattheit)', source: 'DESI Collaboration, Kavic et al., Holometer, Torsionswaagen', scale: 7, relevance: 0.75 }, // Relevanz erhöht
+            { id: 'desi', title: 'Dynamische Dunkle Energie (DESI) & Glattheit', category: 'Dunkle Energie', description: 'DESI-Daten deuten auf eine abnehmende Dunkle Energie (Λ(t)) hin, im Gegensatz zu einem konstanten Wert. Dies könnte ein "Hotfix" oder eine LOD-Optimierung in einer Simulation sein – weniger Expansion, weniger zu rendern. Zusammen mit der verdächtigen Glattheit der Raumzeit (Holometer, Torsionswaagen) könnte dies auf eine Engine hindeuten, die Ressourcen effizient anpasst.', quote: '„Dark energy might decrease over time, hinting at a dynamic parameter tweak – paired with spacetime’s eerie smoothness, it suggests optimization.“ (Frei nach DESI, ergänzt um Glattheit)', source: 'DESI Collaboration, Kavic et al., Holometer, Torsionswaagen', scale: 7, relevance: 0.75 },
             { id: 'ctc', title: 'Closed Timelike Curves (CTCs)', category: 'Raumzeitstruktur', description: 'Closed Timelike Curves sind geschlossene Bahnen in der Raumzeit, die Zeitreisen ermöglichen könnten. Sie tauchen in Lösungen der Allgemeinen Relativitätstheorie auf (z. B. Gödel-Universum oder Kerr-Metrik). Ihre Existenz könnte auf "Bugfixes" oder Rechenregeln hinweisen, die Kausalität in einer Simulation steuern.', quote: '„Certain solutions of general relativity allow for paths where an object can travel back to its own past.“ (Frei nach Gödel, 1949)', source: 'K. Gödel (1949), S. Hawking (Chronology Protection Conjecture)', scale: 6, relevance: 0.65 },
             { id: 'kerr', title: 'Kerr-Singularitäten & Ringstruktur', category: 'Schwarze Löcher', description: 'Die Kerr-Metrik beschreibt rotierende Schwarze Löcher mit einer Ring-Singularität statt eines Punktes. Diese Struktur könnte als Knoten oder "Spawner" in einer simulierten Raumzeit dienen, mit Spin als Parameter für Informationsverarbeitung.', quote: '„The Kerr solution introduces a ring singularity, surrounded by an ergosphere, fundamentally different from static black holes.“ (Frei nach Kerr, 1963)', source: 'R. Kerr (1963), Penrose (Cosmic Censorship)', scale: 7, relevance: 0.75 },
             { id: 'holometer', title: 'Holometer: Kein Holographisches Rauschen', category: 'Raumzeitstruktur', description: 'Das Holometer-Experiment am Fermilab hat Hogans Theorie von holographischem Rauschen auf Planck-Skala mit hoher Sicherheit ausgeschlossen. Spätere Tests auf Quantenverdrehungen waren ebenfalls negativ, was auf eine sehr "ruhige" Raumzeit auf diesen Skalen hindeutet. Dies schwächt die Idee einer *einfachen*, offensichtlichen diskreten Struktur, lässt aber feinere oder andere Simulationsmechanismen offen.', quote: '„We found no evidence of the predicted spacetime correlations, ruling out this model with high confidence.“ (Frei nach Hogan/Fermilab, 2015)', source: 'Fermilab Holometer (2015)', scale: 4, relevance: 0.6 },
@@ -326,7 +322,6 @@
             { id: 'noncomm', title: 'Nichtkommutative Geometrie', category: 'Raumzeitstruktur', description: 'Raumzeit könnte nicht-kommutative Eigenschaften haben, bei denen Koordinaten nicht vertauschbar sind. Dies könnte subtile Effekte in Teilchenphysik oder Gravitation zeigen, anders als Hogans Jitter.', quote: '„Noncommutative geometry replaces spacetime points with an algebraic structure.“ (Frei nach Connes, 1994)', source: 'A. Connes (1994)', scale: 5, relevance: 0.6 },
             { id: 'dispersion', title: 'Modifizierte Dispersion (Planck-Energie)', category: 'Quantenmechanik', description: 'Bei extrem hohen Energien könnte Licht eine wellenlängenabhängige Geschwindigkeit zeigen, was auf eine fundamentale Raumzeit-Struktur hindeutet. Das Holometer hätte dies nicht direkt getestet.', quote: '„High-energy photons may reveal a breakdown of smooth spacetime through dispersion effects.“ (Frei nach Amelino-Camelia, 2002)', source: 'G. Amelino-Camelia (Quantum Gravity Phenomenology)', scale: 5, relevance: 0.55 },
             { id: 'torsion', title: 'Quanten-Torsionswaagen: Keine Planck-Effekte', category: 'Raumzeitstruktur', description: 'Hochempfindliche Torsionswaagen testen Gravitation auf kleinen Skalen (bis 30 µm) und das Äquivalenzprinzip (bis 10⁻¹² Präzision). Keine Abweichungen von Newton (1/r²) oder Einstein gefunden – keine mechanischen Spuren einer quantisierten Raumzeit oder fünfter Kräfte (Kopplung < 10⁻¹⁷). Dies schränkt exotische Modelle ein, lässt aber subtilere Quanteneffekte offen.', quote: '„No deviations from inverse-square gravity down to 30 µm, nor violations of equivalence to 10⁻¹² precision.“ (Frei nach Eöt-Wash/CERN)', source: 'Eöt-Wash, CERN Torsions-Experimente', scale: 4, relevance: 0.65 },
-            // ERSETZT 'chaos' durch 'order'
             { id: 'order', title: 'Verdächtige Perfektion der Raumzeit', category: 'Raumzeitstruktur', description: 'Ein natürlich entstandenes Universum sollte Spuren von Chaos zeigen – Planck-Rauschen, Körnigkeit, Abweichungen in Gravitation oder Äquivalenzprinzip. Stattdessen ist die Raumzeit extrem glatt: kein Jitter (Holometer), 1/r² bis 30 µm, Äquivalenz auf 10⁻¹². Diese Ordnung könnte auf eine Simulation hindeuten, die optimiert ist, um Rechenressourcen zu sparen.', quote: '„The universe is suspiciously smooth – as if someone turned off the noise to save computational cost.“ (Spekulativ, inspiriert von Holometer & Torsionswaagen)', source: 'Holometer (Fermilab), Torsionswaagen (Eöt-Wash, CERN)', scale: 7, relevance: 0.75 }
         ];
 
@@ -341,16 +336,21 @@
         let kerrActive = false;
         let foamActive = false;
         let smoothActive = false;
-        let lambdaValue = 1.0; // Aktueller Wert des Lambda-Sliders
-        let lambdaIntervalId = null; // Für automatischen Rücklauf
+        let lambdaValue = 0.75; // Startwert angepasst
+        let lambdaIntervalId = null;
         let ctcCubes = [];
         let kerrCubes = [];
         const KERR_RING_RADIUS = 3;
         let torsionBoundarySphere = null;
-        let heatmapActive = false; // NEU: Zustand für Heatmap
+        let heatmapActive = false;
 
         // --- Initialisierung ---
         document.addEventListener('DOMContentLoaded', () => {
+            const lambdaSlider = document.getElementById('lambda-slider');
+            const lambdaValueDisplay = document.getElementById('lambda-value');
+            if (lambdaSlider) lambdaSlider.value = lambdaValue;
+            if (lambdaValueDisplay) lambdaValueDisplay.textContent = lambdaValue.toFixed(2);
+
             populateCategories();
             populateEvidenceList();
             setupEventListeners();
@@ -468,14 +468,14 @@
             });
 
             const averageScore = totalRelevance > 0 ? (totalWeightedScore / totalRelevance) : 0;
-            const lambdaModifier = (1 - lambdaValue) * 2.0;
+            const lambdaModifier = (1 - lambdaValue) * 2.0; // Low Lambda = High Bonus
             const modifiedScore = Math.min(10, Math.max(0, averageScore + lambdaModifier));
             const finalScore = Math.round(modifiedScore * 10) / 10;
 
             const scoreDisplay = document.getElementById('total-score');
             const scoreBarFill = document.getElementById('score-bar-fill');
             const scoreFeedback = document.getElementById('score-feedback');
-            const scoreArea = document.getElementById('score-area'); // NEU: Score-Bereich für Hintergrund
+            const scoreArea = document.getElementById('score-area');
 
             if (scoreDisplay) scoreDisplay.textContent = `${finalScore.toFixed(1)} / 10`;
             if (scoreBarFill) scoreBarFill.style.width = `${(finalScore / 10) * 100}%`;
@@ -491,16 +491,16 @@
                 scoreFeedback.innerHTML = feedbackText;
             }
 
-             // NEU: Hintergrundfarbe des Score-Bereichs basierend auf Lambda ändern (nur während Runback?)
-             if (scoreArea && lambdaIntervalId) { // Nur während Runback ändern
-                 const suspicionRatio = 1 - lambdaValue; // 0 (Lambda=1) bis 1 (Lambda=0)
-                 // Interpoliere von Grau zu Rot
-                 const red = Math.round(3*16 + suspicionRatio * (15*16 + 7 - 3*16)); // Interpolate Red component (approx gray-800 to red-700)
-                 const green = Math.round(4*16 + 1 - suspicionRatio * (4*16 + 1 - 2*16 + 11)); // Interpolate Green component
-                 const blue = Math.round(5*16 + 5 - suspicionRatio * (5*16 + 5 - 3*16 + 7)); // Interpolate Blue component
+             // Hintergrundfarbe des Score-Bereichs basierend auf Lambda ändern (nur während Runback?)
+             if (scoreArea && lambdaIntervalId) {
+                 const suspicionRatio = 1 - lambdaValue;
+                 const red = Math.round(3*16 + suspicionRatio * (15*16 + 7 - 3*16));
+                 const green = Math.round(4*16 + 1 - suspicionRatio * (4*16 + 1 - 2*16 + 11));
+                 const blue = Math.round(5*16 + 5 - suspicionRatio * (5*16 + 5 - 3*16 + 7));
+                 // Sanfter Übergang
                  scoreArea.style.backgroundColor = `rgb(${red}, ${green}, ${blue})`;
              } else if (scoreArea) {
-                 // Standardhintergrund, wenn Runback nicht aktiv ist
+                 // Reset zu Standard-Grau, wenn nicht im Runback
                  scoreArea.style.backgroundColor = 'rgb(31, 41, 55)'; // Tailwind gray-800
              }
         }
@@ -510,34 +510,36 @@
             const suspicionElement = document.getElementById('suspicion-level');
             if (!suspicionElement) return;
 
-            const lambdaSuspicion = (1 - lambdaValue) * 50;
-            const smoothBonus = smoothActive ? 30 : 0;
-            let exoticBonus = 0;
-            if (isNonCom || foamActive) exoticBonus += 10;
-            if (ctcActive || kerrActive) exoticBonus += 20;
-            const totalSuspicion = Math.min(100, lambdaSuspicion + smoothBonus + exoticBonus);
+            const currentSuspicion = calculateCurrentSuspicion();
 
             let suspicionText, suspicionColor;
-            if (totalSuspicion >= 80) {
+            if (currentSuspicion >= 80) {
                 suspicionText = "⚠ Verdachts-Pegel: Sehr Hoch (Optimierung)"; suspicionColor = "text-red-500";
-            } else if (totalSuspicion >= 50) {
+            } else if (currentSuspicion >= 50) {
                 suspicionText = "Verdachts-Pegel: Hoch (Effizienz?)"; suspicionColor = "text-orange-500";
-            } else if (totalSuspicion >= 30) {
+            } else if (currentSuspicion >= 30) {
                 suspicionText = "Verdachts-Pegel: Mittel (Anpassung?)"; suspicionColor = "text-yellow-500";
             } else {
                 suspicionText = "Verdachts-Pegel: Niedrig"; suspicionColor = "text-gray-500";
             }
-            suspicionElement.textContent = `${suspicionText} [${totalSuspicion.toFixed(0)}%]`;
+            suspicionElement.textContent = `${suspicionText} [${currentSuspicion.toFixed(0)}%]`;
             suspicionElement.className = `text-center text-xl mt-3 font-bold ${suspicionColor}`;
 
             // Update Heatmap, wenn aktiv
             if (heatmapActive) {
-                updateHeatmapColors(totalSuspicion);
+                updateHeatmapColors(currentSuspicion);
             }
         }
 
 
         // --- Gittermodell Initialisierung & Funktionen (Three.js) ---
+        // Helper function for color interpolation
+        function interpolateColor(hex1, hex2, factor) {
+            const c1 = new THREE.Color(hex1);
+            const c2 = new THREE.Color(hex2);
+            return c1.lerp(c2, factor).getHex();
+        }
+
         function initGittermodell() {
             const container = document.getElementById('gittermodell-container');
             if (!container) return;
@@ -639,30 +641,32 @@
                 const now = performance.now();
 
                 // 1. Apply base scaling/position from Lambda(t)
-                updateLambdaEffect(); // Sets base position based on expansion/contraction
+                updateLambdaEffect();
 
                 // 2. Calculate current suspicion for heatmap
-                const currentSuspicion = calculateCurrentSuspicion(); // Helper function to get suspicion value
+                const currentSuspicion = calculateCurrentSuspicion();
 
                 gridGroup.children.forEach(cube => {
                     let isHandledByMovementMode = (ctcActive && cube.userData.isCTC) || (kerrActive && cube.userData.isKerr);
-                    let isHandledByAppearanceMode = isHandledByMovementMode || smoothActive || heatmapActive; // Heatmap überschreibt andere Farben
+                    // Heatmap überschreibt alle anderen Erscheinungsmodi (Smooth, Foam, NonCom)
+                    let isHandledByAppearanceMode = isHandledByMovementMode || heatmapActive || smoothActive;
 
                     // Start with current position (already scaled by Lambda)
                     let targetX = cube.position.x;
                     let targetY = cube.position.y;
                     let targetZ = cube.position.z;
                     // Start with default appearance
-                    let targetColor = 0x3b82f6;
+                    let targetColor = 0x3b82f6; // Default blue
                     let targetOpacity = 0.6;
                     let targetScale = currentZoom >= 4.5 ? 1.05 : 1;
 
+                    // Glätte-Modus (überschreibt Basis-Aussehen & statische Position, wenn KEINE Heatmap)
+                    if (smoothActive && !heatmapActive) {
+                        // NEU: Angepasste Glättungsformel für Opacity & Farbe
+                        const smoothnessFactor = Math.max(0, Math.min(1, (lambdaValue - 0.6) * 2.5)); // Wirkt erst ab 0.6
+                        targetOpacity = 0.6 + smoothnessFactor * 0.3; // Opacity steigt mit Lambda > 0.6
+                        targetColor = interpolateColor(0x3b82f6, 0x06b6d4, smoothnessFactor); // Interpoliert zu Cyan
 
-                    // Glätte-Modus (überschreibt Basis-Aussehen & statische Position)
-                    if (smoothActive) {
-                        targetColor = 0x06b6d4; // Cyan
-                        const smoothnessFactor = (1 - lambdaValue);
-                        targetOpacity = 0.9 - smoothnessFactor * 0.4;
                         targetX = cube.userData.originalX * lambdaValue;
                         targetZ = cube.userData.originalZ * lambdaValue;
                         targetY = cube.userData.baseY * lambdaValue;
@@ -676,7 +680,7 @@
                         targetX = cube.userData.originalX * lambdaValue + Math.cos(angle) * radius;
                         targetZ = cube.userData.originalZ * lambdaValue + Math.sin(angle) * radius;
                         targetY = cube.userData.baseY * lambdaValue;
-                        targetColor = 0xffff00; // Gelb
+                        if (!heatmapActive) targetColor = 0xffff00; // Gelb (nur wenn keine Heatmap)
                         targetOpacity = 0.7;
                         isHandledByAppearanceMode = true;
                     }
@@ -690,32 +694,32 @@
                         targetZ = Math.sin(angle) * ringRadius;
                         targetY = cube.userData.baseY * lambdaValue;
                         targetScale = (currentZoom >= 4.5 ? 1.05 : 1) * (1 + Math.sin(angle * 2 + now / 500) * 0.2 * lambdaValue);
-                        targetColor = 0xff0000; // Rot
+                        if (!heatmapActive) targetColor = 0xff0000; // Rot (nur wenn keine Heatmap)
                         targetOpacity = 0.7;
                         isHandledByAppearanceMode = true;
                     }
 
-                    // Schaum-Modus (nur wenn Glätte aus ist und nicht CTC/Kerr)
-                    if (foamActive && !smoothActive && !isHandledByMovementMode) {
+                    // Schaum-Modus (nur wenn Glätte/Heatmap aus ist und nicht CTC/Kerr)
+                    if (foamActive && !smoothActive && !heatmapActive && !isHandledByMovementMode) {
                         const noise = Math.sin(now * 0.001 + cube.userData.gridX * 0.5 + cube.userData.gridZ * 0.3) * 0.1;
                         targetY += noise;
                         targetOpacity = 0.3;
                     }
 
-                    // Nicht-Kommutativität (nur wenn Glätte aus ist und nicht CTC/Kerr)
-                    if (isNonCom && !smoothActive && !isHandledByMovementMode) {
+                    // Nicht-Kommutativität (nur wenn Glätte/Heatmap aus ist und nicht CTC/Kerr)
+                    if (isNonCom && !smoothActive && !heatmapActive && !isHandledByMovementMode) {
                         const jitterAmount = 0.015;
                         const deltaX = (Math.random() - 0.5) * jitterAmount;
                         targetX += deltaX;
                         targetZ += deltaX * 0.5;
                     }
 
-                    // NEU: Heatmap-Modus (überschreibt alle anderen Farben)
+                    // Heatmap-Modus (überschreibt alle anderen Farben/Opacity, wenn aktiv)
                     if (heatmapActive) {
                         const suspicionHue = 0.66 - (currentSuspicion / 100) * 0.66; // Blau (0.66) zu Rot (0)
                         targetColor = new THREE.Color().setHSL(suspicionHue, 0.8, 0.5).getHex();
-                        targetOpacity = 0.7; // Einheitliche Opazität für Heatmap
-                        isHandledByAppearanceMode = true; // Sicherstellen, dass diese Farbe bleibt
+                        targetOpacity = 0.6 + (currentSuspicion / 100) * 0.3; // 0.6 bis 0.9
+                        isHandledByAppearanceMode = true; // Sicherstellen, dass diese Farbe/Opacity bleibt
                     }
 
                     // Setze finale Position, Farbe, Opazität, Skalierung
@@ -801,17 +805,17 @@
                 });
                 buttonRow.appendChild(smoothButton);
             }
-             // NEU: Heatmap Button
+             // Heatmap Button
              if (!document.getElementById('toggle-heatmap')) {
                 const heatmapButton = document.createElement('button');
                 heatmapButton.id = 'toggle-heatmap';
-                heatmapButton.className = 'gitter-button bg-gradient-to-r from-blue-500 via-purple-500 to-red-500 hover:from-blue-600 hover:via-purple-600 hover:to-red-600'; // Farbverlauf
+                heatmapButton.className = 'gitter-button bg-gradient-to-r from-blue-500 via-purple-500 to-red-500 hover:from-blue-600 hover:via-purple-600 hover:to-red-600';
                 heatmapButton.textContent = 'Heatmap Modus';
                 heatmapButton.addEventListener('click', () => {
                     heatmapActive = !heatmapActive;
                     console.log("Heatmap aktiviert:", heatmapActive);
-                    updateZoomInfo(); // Update Anzeige
-                    updateSuspicionLevel(); // Update Farben sofort
+                    updateZoomInfo();
+                    updateSuspicionLevel(); // Trigger color update
                 });
                 buttonRow.appendChild(heatmapButton);
             }
@@ -823,7 +827,7 @@
             const zoomInfo = document.getElementById('zoom-info');
             if (zoomInfo) {
                 let modes = [];
-                if (heatmapActive) modes.push('Heatmap'); // Heatmap hat Vorrang
+                if (heatmapActive) modes.push('Heatmap');
                 else if (smoothActive) modes.push('Glätte');
                 else {
                     if (isNonCom) modes.push('Nicht-Kommutativ');
@@ -858,7 +862,7 @@
              }
         }
 
-        // NEU: Helper function to get current suspicion value
+        // Helper function to get current suspicion value
         function calculateCurrentSuspicion() {
              const lambdaSuspicion = (1 - lambdaValue) * 50;
              const smoothBonus = smoothActive ? 30 : 0;
@@ -868,13 +872,15 @@
              return Math.min(100, lambdaSuspicion + smoothBonus + exoticBonus);
         }
 
-        // NEU: Updates heatmap colors based on suspicion
+        // Updates heatmap colors based on suspicion
         function updateHeatmapColors(suspicionPercentage) {
              if (!gridGroup || !heatmapActive) return; // Nur im Heatmap-Modus
              const suspicionHue = 0.66 - (suspicionPercentage / 100) * 0.66; // Blau (0.66) zu Rot (0)
              gridGroup.children.forEach(cube => {
+                 // Überschreibe Farbe für Heatmap
                  cube.material.color.setHSL(suspicionHue, 0.8, 0.5);
-                 cube.material.opacity = 0.7; // Einheitliche Opazität
+                 // Setze Opazität für Heatmap
+                 cube.material.opacity = 0.6 + (suspicionPercentage / 100) * 0.3; // 0.6 bis 0.9
                  cube.material.needsUpdate = true;
              });
         }
@@ -895,11 +901,19 @@
                 const distance = Math.sqrt(dx*dx + dy*dy + dz*dz);
                 let entropy = 0;
                 if (distance < maxRadius) { entropy = Math.max(0, maxEntropy * (1 - distance / maxRadius)); }
+
+                // Entropie mit Lambda(t) skalieren
                 entropy *= lambdaValue;
-                if (smoothActive) { entropy *= (1 - lambdaValue) * 0.001; }
+
+                // Entropie extrem dämpfen, wenn Glätte aktiv ist (NEUE Logik)
+                if (smoothActive) {
+                    const smoothnessFactor = Math.max(0, Math.min(1, (lambdaValue - 0.6) * 2.5)); // 0 bis 1
+                    entropy *= (1 - smoothnessFactor * 0.999); // Dämpfung stark bei hohem Lambda (>0.6)
+                }
+
                 cube.userData.entropy = entropy;
                 const normalizedEntropy = Math.min(1, Math.max(0, entropy * entropyScaleFactor));
-                const hue = 0.66 - (normalizedEntropy * 0.66);
+                const hue = 0.66 - (normalizedEntropy * 0.66); // Blau -> Rot
 
                 if (cube.material && typeof cube.material.color?.setHSL === 'function') {
                     // Farbe nur ändern, wenn KEIN spezieller Modus (CTC/Kerr/Smooth) aktiv ist
@@ -909,6 +923,7 @@
                     }
                 } else { console.warn("Material oder Farbe nicht gefunden für Cube:", cube); }
             });
+            // console.log(`Gitter-Entropie aktualisiert für Masse: ${mass.toExponential(2)} kg`);
         }
 
         // Kerr Entropie Berechnung
@@ -923,19 +938,19 @@
              return entropy;
         }
 
-        // Aktualisiert die Effizienz-Anzeige (jetzt als Bar)
+        // Aktualisiert die Effizienz-Anzeige (jetzt als Bar und "Glättung")
         function updateEfficiencyInfo() {
             const efficiencyDiv = document.getElementById('efficiency-info');
             if (!efficiencyDiv) return;
-            const efficiency = (1 - lambdaValue) * 100;
-            let efficiencyText = `Effizienz: ${efficiency.toFixed(0)}%`;
-            if (smoothActive) efficiencyText += ' (Glatt)';
+            const smoothnessPercentage = (1 - lambdaValue) * 100; // Niedrigeres Lambda = Höhere Glättung/Effizienz
+            let infoText = `Glättung: ${smoothnessPercentage.toFixed(0)}%`; // Text geändert
+            if (smoothActive) infoText += ' (Aktiv)'; // Zeigt an, ob Glättungsmodus an ist
             // Erstelle Bar HTML
             efficiencyDiv.innerHTML = `
                 <div class="w-16 h-2 bg-gray-700 rounded overflow-hidden mr-2">
-                    <div class="h-full bg-cyan-500 rounded" style="width: ${efficiency}%"></div>
+                    <div class="h-full bg-cyan-500 rounded" style="width: ${smoothnessPercentage}%"></div>
                 </div>
-                <span>${efficiencyText}</span>
+                <span>${infoText}</span>
             `;
         }
 
@@ -1046,7 +1061,7 @@
                      const old_lambda = 1.0; // Fester Startwert für Demo
                      const expansion_rate = c * lambda_t; // Vereinfacht
                      const smoothness_factor = 1 - lambda_t; // NEU
-                     outputElement.textContent = `Λ(t)-Hotfix: Dunkle Energie von ${old_lambda.toFixed(2)} zu ${lambda_t.toFixed(2)}, Expansion ≈ ${expansion_rate.toExponential(2)} m/s, Glättungsfaktor: ${smoothness_factor.toFixed(2)} (LOD-Optimierung?)`;
+                     outputElement.textContent = `Λ(t)-Hotfix: Dunkle Energie von ${old_lambda.toFixed(2)} zu ${lambda_t.toFixed(2)}, Expansion ≈ ${expansion_rate.toExponential(2)} m/s, Optimierungsfaktor (1-Λ): ${smoothness_factor.toFixed(2)}`;
                  }
              });
 
@@ -1054,7 +1069,7 @@
              document.getElementById('lambda-runback')?.addEventListener('click', (e) => {
                  const button = e.target;
                  const slider = document.getElementById('lambda-slider');
-                 const scoreArea = document.getElementById('score-area'); // Für Hintergrundfarbe
+                 const scoreArea = document.getElementById('score-area');
                  if (!slider || !button) return;
 
                  if (lambdaIntervalId) { // Stoppe den Rücklauf
@@ -1073,6 +1088,7 @@
                              if(scoreArea) scoreArea.style.backgroundColor = ''; // Reset background at end
                              console.log("Lambda runback finished.");
                          }
+                         // Update UI synchron zum Intervall
                          slider.value = lambdaValue;
                          const lambdaValueDisplay = document.getElementById('lambda-value');
                          if(lambdaValueDisplay) lambdaValueDisplay.textContent = lambdaValue.toFixed(2);
@@ -1116,27 +1132,29 @@
              const expansionFactor = lambdaValue;
 
              gridGroup.children.forEach(cube => {
+                 // Skaliere Position relativ zum Zentrum
+                 // Diese Position wird die Basis für andere Effekte im animate() Loop
                  const targetX = cube.userData.originalX * expansionFactor;
-                 const targetY = cube.userData.baseY * expansionFactor;
+                 const targetY = cube.userData.baseY * expansionFactor; // Skaliere auch baseY
                  const targetZ = cube.userData.originalZ * expansionFactor;
-                 // Setze die Basis-Position für diesen Frame
+                 // Setze die Position direkt hier, damit animate() darauf aufbauen kann
                  cube.position.set(targetX, targetY, targetZ);
              });
          }
 
-         // Aktualisiert die Effizienz-Anzeige (jetzt als Bar)
+         // Aktualisiert die Effizienz-Anzeige (jetzt als Bar und "Glättung")
          function updateEfficiencyInfo() {
             const efficiencyDiv = document.getElementById('efficiency-info');
             if (!efficiencyDiv) return;
-            const efficiency = (1 - lambdaValue) * 100;
-            let efficiencyText = `Effizienz: ${efficiency.toFixed(0)}%`;
-            if (smoothActive) efficiencyText += ' (Glatt)';
+            const smoothnessPercentage = (1 - lambdaValue) * 100; // Niedrigeres Lambda = Höhere Glättung/Effizienz
+            let infoText = `Glättung: ${smoothnessPercentage.toFixed(0)}%`; // Text geändert
+            if (smoothActive) infoText += ' (Aktiv)'; // Zeigt an, ob Glättungsmodus an ist
             // Erstelle Bar HTML
             efficiencyDiv.innerHTML = `
                 <div class="w-16 h-2 bg-gray-700 rounded overflow-hidden mr-2">
-                    <div class="h-full bg-cyan-500 rounded" style="width: ${efficiency}%"></div>
+                    <div class="h-full bg-cyan-500 rounded" style="width: ${smoothnessPercentage}%"></div>
                 </div>
-                <span>${efficiencyText}</span>
+                <span>${infoText}</span>
             `;
         }
 
