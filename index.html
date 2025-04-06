@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulations-Indizien-Modul</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        @font-face {
+            font-family: 'LucideIcons';
+            src: url(https://cdn.jsdelivr.net/npm/lucide-static@latest/font/Lucide.ttf) format('truetype');
+        }
+        .lucide {
+            font-family: 'LucideIcons';
+            font-size: 1.1rem;
+            line-height: 1;
+            vertical-align: middle;
+        }
+        :root { color-scheme: dark; }
+        body { font-family: 'Inter', sans-serif; }
+        .evidence-card {
+            transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, opacity 0.3s ease-out;
+            cursor: pointer;
+        }
+        .evidence-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(93, 92, 222, 0.2), 0 4px 6px -4px rgba(93, 92, 222, 0.1);
+        }
+        input[type=range] {
+            -webkit-appearance: none; appearance: none;
+            width: 100%; height: 6px; background: #4b5563;
+            border-radius: 3px; outline: none; opacity: 0.7; transition: opacity .2s; cursor: pointer;
+        }
+        input[type=range]:hover { opacity: 1; }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none;
+            width: 18px; height: 18px; background: #818cf8;
+            border-radius: 50%; cursor: pointer; border: 2px solid #1f2937;
+        }
+        input[type=range]::-moz-range-thumb {
+            width: 14px; height: 14px; background: #818cf8;
+            border-radius: 50%; cursor: pointer; border: 2px solid #1f2937;
+        }
+        pre code {
+            display: block; background-color: #1f2937; color: #d1d5db;
+            padding: 1rem; border-radius: 0.375rem;
+            font-family: 'Courier New', Courier, monospace; font-size: 0.8rem;
+            overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;
+        }
+        #gittermodell-container {
+            min-height: 400px; background-color: #111827;
+            border-radius: 0.5rem; border: 1px solid #374151;
+            position: relative; overflow: hidden; cursor: grab;
+        }
+        #gittermodell-container:active { cursor: grabbing; }
+        #zoom-info, #efficiency-info { /* Gemeinsames Styling für Overlays */
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.7); color: #a5f3fc;
+            padding: 5px 10px; border-radius: 4px; font-size: 0.75rem;
+            z-index: 10; pointer-events: none;
+        }
+        #zoom-info { bottom: 10px; left: 10px; }
+        #efficiency-info { top: 10px; right: 10px; } /* Position für Effizienz */
+
+        #score-bar-fill { transition: width 0.5s ease-out; }
+        .input-style {
+             background-color: #374151; color: #e5e7eb;
+             border: 1px solid #4b5563; border-radius: 0.375rem;
+             padding: 0.5rem; font-size: 0.875rem; width: 100%; margin-bottom: 1rem;
+         }
+         .input-style:focus {
+             outline: none; border-color: #6366f1;
+             box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.5);
+         }
+         .gitter-button {
+             font-size: 0.75rem; color: white;
+             padding: 0.25rem 0.75rem; border-radius: 0.25rem;
+             transition: background-color 0.15s ease-in-out;
+             cursor: pointer;
+         }
+         .gitter-button:disabled {
+             opacity: 0.5; cursor: not-allowed;
+         }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-200 p-4 sm:p-6 md:p-8">
+
+    <div class="max-w-7xl mx-auto">
+
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl md:text-4xl font-bold text-indigo-400 mb-2">Simulations-Indizien-Modul</h1>
+            <p class="text-lg text-gray-400">Bewertung von Hinweisen auf eine simulierte Realität</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <div class="lg:col-span-1 bg-gray-800 p-4 rounded-lg shadow-lg flex flex-col">
+                <h2 class="text-xl font-semibold mb-4 text-indigo-300 border-b border-gray-700 pb-2">Indizien-Dashboard</h2>
+                <select id="category-filter" class="input-style">
+                    <option value="all">Alle Kategorien</option>
+                    </select>
+                <input type="text" id="search-evidence" placeholder="Indiz suchen..." class="input-style">
+                <div id="evidence-list" class="space-y-3 flex-grow overflow-y-auto pr-2">
+                    <p class="text-gray-500">Lade Indizien...</p>
+                </div>
+            </div>
+
+            <div class="lg:col-span-2 bg-gray-800 p-6 rounded-lg shadow-lg">
+                <h2 class="text-xl font-semibold mb-4 text-indigo-300">Detailansicht & Bewertung</h2>
+                <div id="evidence-detail" class="space-y-4">
+                    <p class="text-gray-500">Wähle ein Indiz aus der Liste links.</p>
+                    </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
+                <h2 class="text-xl font-semibold mb-3 text-indigo-300">Interaktives Gittermodell (Raumzeit)</h2>
+                <div id="gittermodell-container">
+                    <div id="zoom-info">Zoom: 1.0x | Modus: Standard | Λ(t)=1.00</div>
+                    <div id="efficiency-info">Effizienz: 0%</div> </div>
+                <div id="gitter-controls" class="mt-4 flex flex-col items-center gap-2">
+                     <div class="flex flex-wrap gap-2 justify-center">
+                        <button id="toggle-noncom" class="gitter-button bg-purple-600 hover:bg-purple-700">Nicht-Kommutativität</button>
+                        <button id="add-mass" class="gitter-button bg-green-600 hover:bg-green-700">"Masse" Hinzufügen</button>
+                        </div>
+                    <div class="mt-4 w-full max-w-xs">
+                         <label for="lambda-slider" class="block text-sm font-medium text-indigo-300 mb-1 text-center">Dunkle Energie Λ(t): <span id="lambda-value">1.00</span></label>
+                         <input type="range" id="lambda-slider" min="0" max="1" value="1" step="0.05" class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer">
+                         <div class="flex justify-between text-xs text-gray-500 mt-1 px-1">
+                             <span>Kontraktion</span>
+                             <span>Standard</span>
+                         </div>
+                         <button id="lambda-runback" class="gitter-button bg-blue-600 hover:bg-blue-700 w-full mt-2">Starte Λ(t) Rücklauf</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
+                <h2 class="text-xl font-semibold mb-3 text-indigo-300">Quellcode-Zoom (Konzept)</h2>
+                <p class="text-sm text-gray-400 mb-3">Simuliert die Änderung von Parametern auf fundamentaler Ebene.</p>
+                <pre><code id="pseudo-code" class="text-xs">class SpacetimeGrid:
+    def __init__(self, size, planck_scale=1.616e-35):
+        # Annahme: Cell() speichert Zustand & Entropie
+        self.grid = [[Cell() for _ in range(size)] for _ in range(size)]
+        self.scale = planck_scale
+        self.c = 299792458
+        self.G = 6.67430e-11
+        self.hbar = 1.0545718e-34
+        self.planck_length = 1.616e-35
+        self.dark_energy = 1.0 # Lambda(t) Parameter
+
+    def update(self, rules):
+        # ... (Update Logik basierend auf Regeln) ...
+        pass # Platzhalter
+
+    def calculate_bekenstein_entropy(self, mass):
+        # ... (wie zuvor) ...
+        if mass <= 0: return 0
+        schwarzschild_radius_sq = ((2 * self.G * mass) / (self.c * self.c))**2
+        area = 4 * Math.PI * schwarzschild_radius_sq
+        entropy = (self.c**3 * area) / (4 * self.G * self.hbar)
+        return entropy
+
+    def calculate_kerr_entropy(self, mass, spin):
+        # ... (wie zuvor) ...
+        if mass <= 0 or spin < 0 or spin > 1: return 0
+        r_plus_term = Math.sqrt(Math.max(0, 1 - spin**2));
+        r_plus = (self.G * mass / (self.c**2)) * (1 + r_plus_term);
+        area = 4 * Math.PI * (r_plus**2 + (self.G * mass * spin / self.c**2)**2);
+        entropy = (self.c**3 * area) / (4 * self.G * self.hbar);
+        return entropy
+
+    def apply_mass_effect(self, x, y, mass):
+        # ... (wie zuvor) ...
+        entropy_increase = self.calculate_bekenstein_entropy(mass)
+        print(f"Applied mass {mass}, Schwarzschild entropy: {entropy_increase.toExponential(2)}")
+
+    def apply_kerr_effect(self, x, y, mass, spin):
+        # ... (wie zuvor) ...
+        entropy = self.calculate_kerr_entropy(mass, spin)
+        print(f"Kerr-Effekt: Masse {mass}, Spin {spin}, Kerr entropy: {entropy.toExponential(2)}")
+
+    def simulate_ctc(self, x, y, steps=10):
+        # ... (wie zuvor) ...
+        current_cell = self.grid[x][y]
+        initial_state = current_cell.state
+        print(f"Starting CTC at ({x}, {y}), initial state: {initial_state}")
+        for t in range(steps):
+            current_cell.state = (current_cell.state + t + 1) % steps
+            print(f"CTC Step {t+1}: State at ({x}, {y}) = {current_cell.state}")
+        current_cell.state = initial_state
+        print(f"CTC completed at ({x}, {y}), state reset to {initial_state}")
+
+    def enforce_minimal_scale(self, position, delta):
+        # ... (wie zuvor) ...
+        if Math.abs(delta) < self.planck_length: return 0
+        return Math.round(delta / self.planck_length) * self.planck_length
+
+    def test_inverse_square(self, mass1, mass2, distance):
+        # ... (wie zuvor) ...
+        force = (self.G * mass1 * mass2) / (distance * distance)
+        threshold = 1e-14
+        if distance < 30e-6:
+            if force < threshold:
+                print(f"Newton-Kraft bei {distance.toExponential(1)} m: {force.toExponential(2)} N (unterhalb Messgrenze {threshold.toExponential(1)} N, keine Abweichung nachweisbar)")
+                return True
+            else:
+                print(f"Newton-Kraft bei {distance.toExponential(1)} m: {force.toExponential(2)} N (über Messgrenze, Torsionswaagen würden keine Abweichung finden)")
+                return True
+        else:
+            print(f"Distanz {distance.toExponential(1)} m über Torsionswaagen-Grenze (30 µm)")
+            return None
+
+    def test_equivalence(self, mass_gravity, mass_inertia, material):
+        # ... (wie zuvor) ...
+        ratio = mass_gravity / mass_inertia
+        precision = 1e-12
+        deviation = Math.abs(1 - ratio)
+        if deviation < precision:
+            print(f"Äquivalenztest für Material '{material}': Verhältnis m_grav/m_inertia = {ratio.toFixed(14)}, Abweichung {deviation.toExponential(1)} < {precision.toExponential(1)} (Bestätigt)")
+            return True
+        else:
+            print(f"Äquivalenztest für Material '{material}': Verhältnis m_grav/m_inertia = {ratio.toFixed(14)}, Abweichung {deviation.toExponential(1)} > {precision.toExponential(1)} (Widerspricht Experimenten!)")
+            return False
+
+    def simulate_chaos(self, x, y, amplitude=0.1):
+        # ... (wie zuvor) ...
+        current_cell = self.grid[x][y]
+        initial_state = current_cell.state
+        noise = (Math.random() - 0.5) * amplitude
+        current_cell.state += noise
+        print(f"Chaos-Simulation an ({x}, {y}): Zustand von {initial_state.toFixed(2)} zu {(current_cell.state).toFixed(2)}")
+        return current_cell.state
+
+    def optimize_smoothness(self, x, y):
+        # ... (wie zuvor) ...
+        current_cell = self.grid[x][y]
+        initial_state = current_cell.state
+        optimized_state = Math.round(current_cell.state / self.planck_length) * self.planck_length;
+        current_cell.state = optimized_state
+        print(f"Optimiere Glätte an ({x}, {y}): Zustand von {initial_state.toExponential(2)} zu {optimized_state.toExponential(2)} (Rauschen entfernt für Effizienz)")
+        return current_cell.state
+
+    # UPDATE: Lambda(t) Anpassung mit Glättungsfaktor
+    def adjust_dark_energy(self, lambda_t):
+        # Simuliert eine dynamische Dunkle Energie als Konfigurationswert
+        if lambda_t < 0 or lambda_t > 1:
+            print(f"Ungültiger Λ(t)-Wert: {lambda_t}, muss zwischen 0 und 1 liegen")
+            return False
+        old_lambda = self.dark_energy
+        self.dark_energy = lambda_t
+        # Vereinfachte Kosmo-Simulation: Expansion skaliert mit lambda_t
+        expansion_rate = self.c * lambda_t
+        # Glattheitseffekt: Niedrigeres Lambda erhöht Glätte
+        smoothness_factor = 1 - lambda_t;
+        print(f"Dunkle Energie angepasst: Λ(t) von {old_lambda.toFixed(2)} zu {lambda_t.toFixed(2)}, Expansion ≈ {expansion_rate.toExponential(2)} m/s, Glättungsfaktor: {smoothness_factor.toFixed(2)} (LOD?)");
+        return True
+
+# --- Pseudo-Code Ende ---
+</code></pre>
+                <div class="mt-4 space-y-2">
+                    <div>
+                        <label for="param-mass" class="text-sm font-medium">Simulierte Masse (in kg, für Entropie):</label>
+                        <input type="number" id="param-mass" value="1e15" step="1e14" class="w-full mt-1 bg-gray-700 border border-gray-600 rounded p-1 text-sm">
+                         <p class="text-xs text-gray-500">Beispiel: Sonnenmasse ≈ 2e30 kg</p>
+                    </div>
+                    <div class="mt-2">
+                        <label for="param-spin" class="text-sm font-medium">Spin-Parameter (0=statisch, 1=maximal):</label>
+                        <input type="number" id="param-spin" value="0.5" min="0" max="1" step="0.1" class="w-full mt-1 bg-gray-700 border border-gray-600 rounded p-1 text-sm">
+                    </div>
+                    <button id="apply-code-params" class="text-xs bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded">Parameter Anwenden & Kerr-Entropie Berechnen</button>
+                     <p id="code-output" class="text-xs text-cyan-400 mt-2"></p>
+                     <div class="flex gap-2 mt-2 flex-wrap" id="test-buttons-container"> <button id="test-inv-square" class="text-xs bg-orange-600 hover:bg-orange-700 text-white py-1 px-3 rounded">Test 1/r² (30µm)</button>
+                         <button id="test-equiv" class="text-xs bg-orange-600 hover:bg-orange-700 text-white py-1 px-3 rounded">Test Äquivalenz</button>
+                         </div>
+                     <p id="torsion-output" class="text-xs text-amber-400 mt-2"></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-semibold mb-4 text-indigo-300">Gesamtbewertung (Spekulativ)</h2>
+            <div class="flex items-center gap-4">
+                <span class="text-sm font-medium">Simulations-Wahrscheinlichkeit:</span>
+                <div class="w-full bg-gray-700 rounded-full h-4 overflow-hidden">
+                    <div id="score-bar-fill" class="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 h-4 rounded-full" style="width: 0%;"></div>
+                </div>
+                <span id="total-score" class="text-lg font-bold text-indigo-300">0 / 10</span>
+            </div>
+            <p id="score-feedback" class="text-xs text-gray-500 mt-2">Basierend auf deiner Bewertung der Indizien und vordefinierter Relevanz.</p>
+             <p id="suspicion-level" class="text-center text-xl mt-3 font-bold text-gray-500">Verdachts-Pegel: Niedrig</p>
+        </div>
+
+    </div>
+
+    <script>
+        // --- Physikalische Konstanten ---
+        const c = 299792458;
+        const G = 6.67430e-11;
+        const hbar = 1.054571817e-34;
+        const PLANCK_LENGTH = 1.616255e-35;
+
+        // --- Datenstruktur für Indizien ---
+        const evidenceData = [
+            { id: 'bekenstein', title: 'Bekenstein-Hawking-Entropie', category: 'Schwarze Löcher', description: 'Die Entropie eines Schwarzen Lochs skaliert mit der Fläche seines Ereignishorizonts (2D), nicht mit dem Volumen (3D). Dies deutet auf eine holografische Informationsstruktur hin, bei der 3D-Realität auf einer 2D-Oberfläche kodiert sein könnte.', quote: '„The entropy of a black hole is proportional to the area of its event horizon.“ (Frei nach Hawking, Bekenstein)', source: 'Hawking (1975), Bekenstein (1973)', scale: 7, relevance: 0.8 },
+            { id: 'hossenfelder', title: 'Hossenfelders Kritik (Schönheit vs. Realität)', category: 'Theorie/Philosophie', description: 'Sabine Hossenfelder kritisiert, dass Theorien wie die Stringtheorie oft nach "Schönheit" statt nach experimenteller Bestätigung ausgewählt werden. Sie spekuliert, dass wir vielleicht nur eine effektive Beschreibung einer tieferen (Rechen-)Struktur finden.', quote: '„Maybe we’re stuck because we’re describing a simulation.“ (Sinngemäß, Hossenfelder, Lost in Math, 2018)', source: 'S. Hossenfelder (2018)', scale: 5, relevance: 0.4 },
+            { id: 'maldacena', title: 'AdS/CFT-Korrespondenz (Holografie)', category: 'Stringtheorie', description: 'Die AdS/CFT-Korrespondenz (Maldacena-Dualität) zeigt mathematisch, dass eine Quantengravitationstheorie in einem höherdimensionalen Raum (Anti-de-Sitter) äquivalent zu einer Quantenfeldtheorie ohne Gravitation auf dessen Rand sein kann. Ein starker Hinweis auf das holografische Prinzip.', quote: '„The AdS/CFT duality suggests that the universe could be a hologram encoded on its boundary.“ (Sinngemäß, Maldacena, 1998)', source: 'J. Maldacena (1998)', scale: 8, relevance: 0.9 },
+            { id: 'planck', title: 'Planck-Skala & Diskretheit', category: 'Raumzeitstruktur', description: 'Unterhalb der Planck-Länge (ca. 10⁻³⁵ m) und Planck-Zeit verlieren unsere aktuellen Physikmodelle (insb. die Beschreibung einer glatten Raumzeit) ihre Gültigkeit. Theorien wie die Schleifenquantengravitation postulieren eine fundamental diskrete ("gekörnte") Struktur der Raumzeit auf dieser Ebene.', quote: '„Below the Planck scale, the concept of spacetime itself may break down into something more fundamental, possibly discrete.“ (Konzept aus Quantengravitationstheorien)', source: 'Quantengravitationsforschung', scale: 6, relevance: 0.7 },
+            { id: 'quanten', title: 'Quanten-Zufall & Messproblem', category: 'Quantenmechanik', description: 'Quantenereignisse scheinen fundamental zufällig zu sein (z.B. radioaktiver Zerfall). Der Zustand eines Systems wird erst durch Messung festgelegt ("Kollaps der Wellenfunktion"). Dies erinnert an Systeme, bei denen Zustände nur bei Bedarf berechnet werden ("lazy evaluation") oder auf Pseudozufallsgeneratoren basieren.', quote: '„The outcome of a quantum measurement is probabilistic, governed by the Born rule.“ (Grundprinzip der QM)', source: 'Quantenmechanik Standardmodell', scale: 6, relevance: 0.6 },
+            // UPDATE 'desi' Indiz
+            { id: 'desi', title: 'Dynamische Dunkle Energie (DESI) & Glattheit', category: 'Dunkle Energie', description: 'DESI-Daten deuten auf eine abnehmende Dunkle Energie (Λ(t)) hin, im Gegensatz zu einem konstanten Wert. Dies könnte ein "Hotfix" oder eine LOD-Optimierung in einer Simulation sein – weniger Expansion, weniger zu rendern. Zusammen mit der verdächtigen Glattheit der Raumzeit (Holometer, Torsionswaagen) könnte dies auf eine Engine hindeuten, die Ressourcen effizient anpasst.', quote: '„Dark energy might decrease over time, hinting at a dynamic parameter tweak – paired with spacetime’s eerie smoothness, it suggests optimization.“ (Frei nach DESI, ergänzt um Glattheit)', source: 'DESI Collaboration, Kavic et al., Holometer, Torsionswaagen', scale: 7, relevance: 0.75 }, // Relevanz erhöht
+            { id: 'ctc', title: 'Closed Timelike Curves (CTCs)', category: 'Raumzeitstruktur', description: 'Closed Timelike Curves sind geschlossene Bahnen in der Raumzeit, die Zeitreisen ermöglichen könnten. Sie tauchen in Lösungen der Allgemeinen Relativitätstheorie auf (z. B. Gödel-Universum oder Kerr-Metrik). Ihre Existenz könnte auf "Bugfixes" oder Rechenregeln hinweisen, die Kausalität in einer Simulation steuern.', quote: '„Certain solutions of general relativity allow for paths where an object can travel back to its own past.“ (Frei nach Gödel, 1949)', source: 'K. Gödel (1949), S. Hawking (Chronology Protection Conjecture)', scale: 6, relevance: 0.65 },
+            { id: 'kerr', title: 'Kerr-Singularitäten & Ringstruktur', category: 'Schwarze Löcher', description: 'Die Kerr-Metrik beschreibt rotierende Schwarze Löcher mit einer Ring-Singularität statt eines Punktes. Diese Struktur könnte als Knoten oder "Spawner" in einer simulierten Raumzeit dienen, mit Spin als Parameter für Informationsverarbeitung.', quote: '„The Kerr solution introduces a ring singularity, surrounded by an ergosphere, fundamentally different from static black holes.“ (Frei nach Kerr, 1963)', source: 'R. Kerr (1963), Penrose (Cosmic Censorship)', scale: 7, relevance: 0.75 },
+            { id: 'holometer', title: 'Holometer: Kein Holographisches Rauschen', category: 'Raumzeitstruktur', description: 'Das Holometer-Experiment am Fermilab hat Hogans Theorie von holographischem Rauschen auf Planck-Skala mit hoher Sicherheit ausgeschlossen. Spätere Tests auf Quantenverdrehungen waren ebenfalls negativ, was auf eine sehr "ruhige" Raumzeit auf diesen Skalen hindeutet. Dies schwächt die Idee einer *einfachen*, offensichtlichen diskreten Struktur, lässt aber feinere oder andere Simulationsmechanismen offen.', quote: '„We found no evidence of the predicted spacetime correlations, ruling out this model with high confidence.“ (Frei nach Hogan/Fermilab, 2015)', source: 'Fermilab Holometer (2015)', scale: 4, relevance: 0.6 },
+            { id: 'lqg', title: 'Loop Quantum Gravity (Raumzeit-Schaum)', category: 'Raumzeitstruktur', description: 'Loop Quantum Gravity postuliert, dass Raumzeit aus diskreten "Spins" oder Knoten besteht, die ein Netzwerk bilden. Dies könnte wie ein mikroskopischer Schaum wirken, ohne transversales Rauschen wie bei Hogan.', quote: '„Spacetime is woven from a network of discrete loops, with area and volume quantized at the Planck scale.“ (Frei nach Rovelli, 2004)', source: 'C. Rovelli, L. Smolin (LQG-Theorie)', scale: 6, relevance: 0.7 },
+            { id: 'noncomm', title: 'Nichtkommutative Geometrie', category: 'Raumzeitstruktur', description: 'Raumzeit könnte nicht-kommutative Eigenschaften haben, bei denen Koordinaten nicht vertauschbar sind. Dies könnte subtile Effekte in Teilchenphysik oder Gravitation zeigen, anders als Hogans Jitter.', quote: '„Noncommutative geometry replaces spacetime points with an algebraic structure.“ (Frei nach Connes, 1994)', source: 'A. Connes (1994)', scale: 5, relevance: 0.6 },
+            { id: 'dispersion', title: 'Modifizierte Dispersion (Planck-Energie)', category: 'Quantenmechanik', description: 'Bei extrem hohen Energien könnte Licht eine wellenlängenabhängige Geschwindigkeit zeigen, was auf eine fundamentale Raumzeit-Struktur hindeutet. Das Holometer hätte dies nicht direkt getestet.', quote: '„High-energy photons may reveal a breakdown of smooth spacetime through dispersion effects.“ (Frei nach Amelino-Camelia, 2002)', source: 'G. Amelino-Camelia (Quantum Gravity Phenomenology)', scale: 5, relevance: 0.55 },
+            { id: 'torsion', title: 'Quanten-Torsionswaagen: Keine Planck-Effekte', category: 'Raumzeitstruktur', description: 'Hochempfindliche Torsionswaagen testen Gravitation auf kleinen Skalen (bis 30 µm) und das Äquivalenzprinzip (bis 10⁻¹² Präzision). Keine Abweichungen von Newton (1/r²) oder Einstein gefunden – keine mechanischen Spuren einer quantisierten Raumzeit oder fünfter Kräfte (Kopplung < 10⁻¹⁷). Dies schränkt exotische Modelle ein, lässt aber subtilere Quanteneffekte offen.', quote: '„No deviations from inverse-square gravity down to 30 µm, nor violations of equivalence to 10⁻¹² precision.“ (Frei nach Eöt-Wash/CERN)', source: 'Eöt-Wash, CERN Torsions-Experimente', scale: 4, relevance: 0.65 },
+            // ERSETZT 'chaos' durch 'order'
+            { id: 'order', title: 'Verdächtige Perfektion der Raumzeit', category: 'Raumzeitstruktur', description: 'Ein natürlich entstandenes Universum sollte Spuren von Chaos zeigen – Planck-Rauschen, Körnigkeit, Abweichungen in Gravitation oder Äquivalenzprinzip. Stattdessen ist die Raumzeit extrem glatt: kein Jitter (Holometer), 1/r² bis 30 µm, Äquivalenz auf 10⁻¹². Diese Ordnung könnte auf eine Simulation hindeuten, die optimiert ist, um Rechenressourcen zu sparen.', quote: '„The universe is suspiciously smooth – as if someone turned off the noise to save computational cost.“ (Spekulativ, inspiriert von Holometer & Torsionswaagen)', source: 'Holometer (Fermilab), Torsionswaagen (Eöt-Wash, CERN)', scale: 7, relevance: 0.75 }
+        ];
+
+        // --- Globale Variablen ---
+        let selectedEvidenceId = null;
+        let scene, camera, renderer, gridGroup; // Für Three.js
+        let currentZoom = 1.0;
+        let isNonCom = false;
+        const GRID_SIZE = 15;
+        const GRID_SPACING = 0.7;
+        let ctcActive = false;
+        let kerrActive = false;
+        let foamActive = false;
+        let smoothActive = false;
+        let lambdaValue = 1.0; // Aktueller Wert des Lambda-Sliders
+        let lambdaIntervalId = null; // Für automatischen Rücklauf
+        let ctcCubes = [];
+        let kerrCubes = [];
+        const KERR_RING_RADIUS = 3;
+        let torsionBoundarySphere = null;
+
+        // --- Initialisierung ---
+        document.addEventListener('DOMContentLoaded', () => {
+            populateCategories();
+            populateEvidenceList();
+            setupEventListeners();
+            initGittermodell();
+            addGitterControlButtons();
+            addCodeTestButtons();
+            updateTotalScore(); // Berechne initialen Score inkl. Lambda
+            updateSuspicionLevel(); // Initialisiere Verdachts-Pegel
+            if (evidenceData.length > 0) {
+                 displayEvidenceDetail(evidenceData[0].id);
+                 const firstCard = document.querySelector('.evidence-card');
+                 if (firstCard) firstCard.classList.add('ring-2', 'ring-indigo-500');
+            }
+        });
+
+        // --- Funktionen ---
+
+        // Füllt das Kategorie-Filter Dropdown
+        function populateCategories() {
+            const filterSelect = document.getElementById('category-filter');
+            if (!filterSelect) return;
+            const categories = [...new Set(evidenceData.map(item => item.category))];
+            while (filterSelect.options.length > 1) { filterSelect.remove(1); }
+            categories.sort().forEach(category => {
+                const option = document.createElement('option');
+                option.value = category; option.textContent = category;
+                filterSelect.appendChild(option);
+            });
+        }
+
+        // Füllt die Indizien-Liste im Dashboard
+        function populateEvidenceList() {
+            const listElement = document.getElementById('evidence-list');
+            const categoryFilter = document.getElementById('category-filter')?.value || 'all';
+            const searchQuery = document.getElementById('search-evidence')?.value.toLowerCase() || '';
+            if (!listElement) return;
+            listElement.innerHTML = '';
+
+            let hasVisibleItems = false;
+            evidenceData.forEach(item => {
+                const categoryMatch = categoryFilter === 'all' || item.category === categoryFilter;
+                const searchMatch = item.title.toLowerCase().includes(searchQuery);
+
+                if (categoryMatch && searchMatch) {
+                    const card = document.createElement('div');
+                    card.className = 'evidence-card bg-gray-700 p-3 rounded-md hover:bg-indigo-900/50 block';
+                    card.dataset.id = item.id;
+                    const title = document.createElement('h3');
+                    title.className = 'font-semibold text-sm text-indigo-300 pointer-events-none';
+                    title.textContent = item.title;
+                    const category = document.createElement('p');
+                    category.className = 'text-xs text-gray-400 pointer-events-none';
+                    category.textContent = `Kategorie: ${item.category}`;
+                    card.appendChild(title); card.appendChild(category); listElement.appendChild(card);
+                    hasVisibleItems = true;
+                     if (item.id === selectedEvidenceId) {
+                         card.classList.add('ring-2', 'ring-indigo-500');
+                     }
+                }
+            });
+             if (!hasVisibleItems) {
+                 listElement.innerHTML = '<p class="text-gray-500 p-3">Keine Indizien entsprechen den Kriterien.</p>';
+             }
+        }
+
+        // Zeigt Details eines ausgewählten Indizes an
+        function displayEvidenceDetail(id) {
+            selectedEvidenceId = id;
+            const item = evidenceData.find(e => e.id === id);
+            const detailElement = document.getElementById('evidence-detail');
+            if (!detailElement || !item) return;
+
+            populateEvidenceList();
+
+            detailElement.innerHTML = `
+                <h3 class="text-lg font-bold text-indigo-300">${item.title}</h3>
+                <p class="text-sm text-gray-300">${item.description}</p>
+                <blockquote class="border-l-4 border-indigo-500 pl-4 italic text-sm text-gray-400 my-3">
+                    "${item.quote}"
+                    <footer class="text-xs text-gray-500 mt-1">- ${item.source}</footer>
+                </blockquote>
+                <div>
+                    <label for="scale-${item.id}" class="block text-sm font-medium mb-1">Bewertung (1=Zufall, 10=Beweis): <span id="scale-value-${item.id}">${item.scale}</span>/10</label>
+                    <input type="range" id="scale-${item.id}" min="1" max="10" value="${item.scale}" step="1" data-id="${item.id}" class="w-full evidence-slider">
+                </div>
+                <p class="text-xs text-gray-500 mt-2">Relevanz (intern): ${ (item.relevance * 100).toFixed(0) }%</p>
+            `;
+
+            const slider = detailElement.querySelector(`#scale-${item.id}`);
+            const valueDisplay = detailElement.querySelector(`#scale-value-${item.id}`);
+            slider?.addEventListener('input', (event) => {
+                const newScale = parseInt(event.target.value);
+                const itemId = event.target.dataset.id;
+                const dataItem = evidenceData.find(e => e.id === itemId);
+                if (dataItem) dataItem.scale = newScale;
+                if (valueDisplay) valueDisplay.textContent = newScale;
+                updateTotalScore(); // Aktualisiert Score inkl. Lambda-Modifikator
+                updateSuspicionLevel(); // Aktualisiert Verdachts-Pegel
+            });
+        }
+
+        // Aktualisiert den Gesamt-Score und das Feedback (inkl. Lambda-Modifikator)
+        function updateTotalScore() {
+            let totalWeightedScore = 0;
+            let totalRelevance = 0;
+            let topContributor = evidenceData.length > 0 ? evidenceData[0] : { scale: 0, relevance: 0, title: 'N/A' };
+
+            evidenceData.forEach(item => {
+                const currentContribution = item.scale * item.relevance;
+                totalWeightedScore += currentContribution;
+                totalRelevance += item.relevance;
+                if (currentContribution > (topContributor.scale * topContributor.relevance)) {
+                    topContributor = item;
+                }
+            });
+
+            const averageScore = totalRelevance > 0 ? (totalWeightedScore / totalRelevance) : 0;
+
+            // Lambda-Modifikator - niedrigeres Lambda erhöht den Score (max +2 Punkte)
+            const lambdaModifier = (1 - lambdaValue) * 2.0;
+            const modifiedScore = Math.min(10, Math.max(0, averageScore + lambdaModifier)); // Clamp between 0 and 10
+
+            const finalScore = Math.round(modifiedScore * 10) / 10;
+
+            const scoreDisplay = document.getElementById('total-score');
+            const scoreBarFill = document.getElementById('score-bar-fill');
+            const scoreFeedback = document.getElementById('score-feedback');
+
+            if (scoreDisplay) scoreDisplay.textContent = `${finalScore.toFixed(1)} / 10`;
+            if (scoreBarFill) scoreBarFill.style.width = `${(finalScore / 10) * 100}%`;
+
+            if (scoreFeedback) {
+                let feedbackText = `Basierend auf deiner Bewertung der Indizien und vordefinierter Relevanz.`;
+                if (topContributor && topContributor.title !== 'N/A') {
+                    feedbackText += `<br>Stärkster Einflussfaktor (Basis): ${topContributor.title} (Score: ${topContributor.scale}, Relevanz: ${(topContributor.relevance*100).toFixed(0)}%)`;
+                }
+                if (lambdaValue < 1.0) {
+                     feedbackText += `<br>Λ(t)-Modifikator: +${lambdaModifier.toFixed(1)} (wegen niedrigem Λ(t)=${lambdaValue.toFixed(2)})`;
+                }
+                scoreFeedback.innerHTML = feedbackText;
+            }
+        }
+
+        // Aktualisiert den Verdachts-Pegel (Dynamischer)
+        function updateSuspicionLevel() {
+            const suspicionElement = document.getElementById('suspicion-level');
+            if (!suspicionElement) return;
+
+            // Basis-Verdacht basierend auf Λ(t) (0-100 Skala)
+            const lambdaSuspicion = (1 - lambdaValue) * 50; // Max 50 Punkte bei Λ(t)=0
+            const smoothBonus = smoothActive ? 30 : 0; // Glätte fügt bis zu 30 hinzu
+            let exoticBonus = 0;
+            if (isNonCom || foamActive) exoticBonus += 10; // Weniger exotisch
+            if (ctcActive || kerrActive) exoticBonus += 20; // Stärker exotisch
+
+            const totalSuspicion = Math.min(100, lambdaSuspicion + smoothBonus + exoticBonus); // Clamp bei 100
+
+            let suspicionText, suspicionColor;
+            if (totalSuspicion >= 80) {
+                suspicionText = "⚠ Verdachts-Pegel: Sehr Hoch (Optimierung)";
+                suspicionColor = "text-red-500";
+            } else if (totalSuspicion >= 50) {
+                suspicionText = "Verdachts-Pegel: Hoch (Effizienz?)";
+                suspicionColor = "text-orange-500";
+            } else if (totalSuspicion >= 30) {
+                suspicionText = "Verdachts-Pegel: Mittel (Anpassung?)";
+                suspicionColor = "text-yellow-500";
+            } else {
+                suspicionText = "Verdachts-Pegel: Niedrig";
+                suspicionColor = "text-gray-500";
+            }
+            suspicionElement.textContent = `${suspicionText} [${totalSuspicion.toFixed(0)}%]`;
+            suspicionElement.className = `text-center text-xl mt-3 font-bold ${suspicionColor}`;
+        }
+
+
+        // --- Gittermodell Initialisierung & Funktionen (Three.js) ---
+        function initGittermodell() {
+            const container = document.getElementById('gittermodell-container');
+            if (!container) return;
+
+            ctcCubes = []; kerrCubes = []; // Reset arrays
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x111827);
+            camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.z = 15; camera.position.y = 5;
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.innerHTML = '';
+            container.appendChild(renderer.domElement);
+            const zoomInfoDiv = document.createElement('div');
+            zoomInfoDiv.id = 'zoom-info';
+            zoomInfoDiv.textContent = `Zoom: ${currentZoom.toFixed(1)}x | Modus: Standard | Λ(t)=${lambdaValue.toFixed(2)}`; // Init mit Lambda
+            container.appendChild(zoomInfoDiv);
+            const efficiencyDiv = document.createElement('div');
+            efficiencyDiv.id = 'efficiency-info';
+            efficiencyDiv.style.cssText = 'position: absolute; top: 10px; right: 10px; background-color: rgba(0, 0, 0, 0.7); color: #a5f3fc; padding: 5px 10px; border-radius: 4px; font-size: 0.75rem; z-index: 10; pointer-events: none;';
+            container.appendChild(efficiencyDiv);
+            updateEfficiencyInfo(); // Initialer Aufruf
+
+
+            const ambientLight = new THREE.AmbientLight(0x606060); scene.add(ambientLight);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.9); directionalLight.position.set(5, 10, 7.5); scene.add(directionalLight);
+
+            gridGroup = new THREE.Group();
+            const geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+            const center = Math.floor(GRID_SIZE / 2);
+
+            for (let x = 0; x < GRID_SIZE; x++) {
+                for (let y = 0; y < GRID_SIZE; y++) {
+                    for (let z = 0; z < GRID_SIZE; z++) {
+                        const material = new THREE.MeshStandardMaterial({ color: 0x3b82f6, transparent: true, opacity: 0.6, roughness: 0.7, metalness: 0.2 });
+                        const cube = new THREE.Mesh(geometry, material);
+                        const posX = (x - GRID_SIZE / 2) * GRID_SPACING;
+                        const posY = (y - GRID_SIZE / 2) * GRID_SPACING;
+                        const posZ = (z - GRID_SIZE / 2) * GRID_SPACING;
+                        cube.position.set(posX, posY, posZ);
+                        cube.userData = { gridX: x, gridY: y, gridZ: z, originalX: posX, originalY: posY, originalZ: posZ, baseY: posY, entropy: 0, isCTC: false, ctcAngle: 0, isKerr: false, kerrAngle: 0 };
+
+                        if (Math.random() < 0.01) { cube.userData.isCTC = true; cube.userData.ctcAngle = Math.random() * Math.PI * 2; ctcCubes.push(cube); }
+                        const dx = x - center; const dz = z - center; const distXZ = Math.sqrt(dx*dx + dz*dz);
+                        if (Math.abs(distXZ - KERR_RING_RADIUS / GRID_SPACING) < 0.5 && Math.abs(y - center) < 1) { cube.userData.isKerr = true; cube.userData.kerrAngle = Math.atan2(dz, dx); kerrCubes.push(cube); }
+                        gridGroup.add(cube);
+                    }
+                }
+            }
+            scene.add(gridGroup);
+
+            // Kamera-Steuerung
+            let isDragging = false; let previousMousePosition = { x: 0, y: 0 };
+            container.addEventListener('mousedown', (e) => { isDragging = true; previousMousePosition = { x: e.clientX, y: e.clientY }; container.style.cursor = 'grabbing'; });
+            container.addEventListener('mouseup', () => { isDragging = false; container.style.cursor = 'grab'; });
+            container.addEventListener('mouseleave', () => { isDragging = false; container.style.cursor = 'grab'; });
+            container.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                const deltaMove = { x: e.clientX - previousMousePosition.x, y: e.clientY - previousMousePosition.y };
+                gridGroup.rotation.y += deltaMove.x * 0.005; gridGroup.rotation.x += deltaMove.y * 0.005;
+                gridGroup.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, gridGroup.rotation.x));
+                previousMousePosition = { x: e.clientX, y: e.clientY };
+            });
+
+            // Zoom & Planck-Skala Effekt & Torsionsgrenze
+            container.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const zoomSpeed = 0.1;
+                currentZoom -= e.deltaY * zoomSpeed * 0.1;
+                currentZoom = Math.max(0.2, Math.min(5.0, currentZoom));
+                camera.position.z = 15 / currentZoom;
+                camera.position.y = 5 / currentZoom;
+                camera.lookAt(scene.position);
+                updateZoomInfo();
+
+                // Planck-Skala Zoom Effekt (Leicht abgeschwächt)
+                const isPlanckZoom = currentZoom >= 4.5;
+                gridGroup.children.forEach(cube => {
+                    cube.material.wireframe = isPlanckZoom;
+                    cube.scale.set(isPlanckZoom ? 1.05 : 1, isPlanckZoom ? 1.05 : 1, isPlanckZoom ? 1.05 : 1);
+                    cube.material.needsUpdate = true;
+                });
+                updateTorsionBoundaryVisibility();
+            });
+
+            window.addEventListener('resize', onWindowResize, false);
+            function onWindowResize() {
+                if (!container || !renderer) return;
+                const width = container.clientWidth; const height = container.clientHeight;
+                 if (width > 0 && height > 0) {
+                    camera.aspect = width / height; camera.updateProjectionMatrix(); renderer.setSize(width, height);
+                 }
+            }
+             onWindowResize();
+
+            function animate() {
+                requestAnimationFrame(animate);
+                const now = performance.now();
+
+                // 1. Apply base scaling/position from Lambda(t)
+                updateLambdaEffect(); // Sets base position based on expansion/contraction
+
+                gridGroup.children.forEach(cube => {
+                    let isHandledByMovementMode = (ctcActive && cube.userData.isCTC) || (kerrActive && cube.userData.isKerr);
+                    let isHandledByAppearanceMode = isHandledByMovementMode || smoothActive;
+
+                    // Start with current position (already scaled by Lambda)
+                    let targetX = cube.position.x;
+                    let targetY = cube.position.y;
+                    let targetZ = cube.position.z;
+                    // Start with default appearance
+                    let targetColor = 0x3b82f6;
+                    let targetOpacity = 0.6;
+                    let targetScale = currentZoom >= 4.5 ? 1.05 : 1;
+
+
+                    // Glätte-Modus (überschreibt Basis-Aussehen & statische Position)
+                    if (smoothActive) {
+                        targetColor = 0x06b6d4; // Cyan
+                        const smoothnessFactor = (1 - lambdaValue);
+                        targetOpacity = 0.9 - smoothnessFactor * 0.4; // Höhere Glätte = weniger durchsichtig
+                        // Setzt auf original * lambda-skalierte Position zurück (fixiert X/Z)
+                        targetX = cube.userData.originalX * lambdaValue;
+                        targetZ = cube.userData.originalZ * lambdaValue;
+                        targetY = cube.userData.baseY * lambdaValue; // Behält Massen-Effekt bei
+                    }
+
+                    // CTC Animation (überschreibt Position und Farbe, wenn aktiv)
+                    if (ctcActive && cube.userData.isCTC) {
+                        const radius = 2 * lambdaValue; // Skaliere Radius mit Lambda
+                        cube.userData.ctcAngle += 0.05;
+                        const angle = cube.userData.ctcAngle;
+                        targetX = cube.userData.originalX * lambdaValue + Math.cos(angle) * radius;
+                        targetZ = cube.userData.originalZ * lambdaValue + Math.sin(angle) * radius;
+                        targetY = cube.userData.baseY * lambdaValue;
+                        targetColor = 0xffff00; // Gelb
+                        targetOpacity = 0.7;
+                        isHandledByAppearanceMode = true;
+                    }
+
+                    // Kerr-Ring Animation (überschreibt Position, Farbe, Skalierung, wenn aktiv)
+                    if (kerrActive && cube.userData.isKerr) {
+                        const ringRadius = KERR_RING_RADIUS * lambdaValue; // Skaliere Radius
+                        cube.userData.kerrAngle += 0.03;
+                        const angle = cube.userData.kerrAngle;
+                        targetX = Math.cos(angle) * ringRadius;
+                        targetZ = Math.sin(angle) * ringRadius;
+                        targetY = cube.userData.baseY * lambdaValue;
+                        targetScale = (currentZoom >= 4.5 ? 1.05 : 1) * (1 + Math.sin(angle * 2 + now / 500) * 0.2 * lambdaValue);
+                        targetColor = 0xff0000; // Rot
+                        targetOpacity = 0.7;
+                        isHandledByAppearanceMode = true;
+                    }
+
+                    // Schaum-Modus (nur wenn Glätte aus ist und nicht CTC/Kerr)
+                    if (foamActive && !smoothActive && !isHandledByMovementMode) {
+                        const noise = Math.sin(now * 0.001 + cube.userData.gridX * 0.5 + cube.userData.gridZ * 0.3) * 0.1;
+                        targetY += noise;
+                        targetOpacity = 0.3;
+                    }
+
+                    // Nicht-Kommutativität (nur wenn Glätte aus ist und nicht CTC/Kerr)
+                    if (isNonCom && !smoothActive && !isHandledByMovementMode) {
+                        const jitterAmount = 0.015;
+                        const deltaX = (Math.random() - 0.5) * jitterAmount;
+                        targetX += deltaX;
+                        targetZ += deltaX * 0.5;
+                    }
+
+                    // Setze finale Position, Farbe, Opazität, Skalierung
+                    cube.position.set(targetX, targetY, targetZ);
+                    cube.scale.set(targetScale, targetScale, targetScale);
+                    if (cube.material.color.getHex() !== targetColor) {
+                        cube.material.color.setHex(targetColor);
+                    }
+                    if (cube.material.opacity !== targetOpacity) {
+                         cube.material.opacity = targetOpacity;
+                    }
+                    cube.material.needsUpdate = true;
+
+                });
+
+                updateEfficiencyInfo(); // Update Effizienz-Anzeige in jedem Frame
+                renderer.render(scene, camera);
+            }
+            animate();
+        }
+
+        // Fügt die Kontroll-Buttons hinzu (ersetzt Grav/Chaos durch Glätte)
+        function addGitterControlButtons() {
+            const controlsContainer = document.getElementById('gitter-controls');
+            if (!controlsContainer) return;
+            const buttonRow = controlsContainer.querySelector('.flex-wrap');
+            if (!buttonRow) return;
+
+            document.getElementById('toggle-grav')?.remove();
+            document.getElementById('toggle-chaos')?.remove();
+
+            // CTC Button
+            if (!document.getElementById('toggle-ctc')) {
+                const ctcButton = document.createElement('button');
+                ctcButton.id = 'toggle-ctc'; ctcButton.className = 'gitter-button bg-yellow-600 hover:bg-yellow-700'; ctcButton.textContent = 'CTCs Umschalten';
+                ctcButton.addEventListener('click', () => { ctcActive = !ctcActive; console.log("CTCs:", ctcActive); updateZoomInfo(); updateSuspicionLevel(); });
+                buttonRow.appendChild(ctcButton);
+            }
+            // Kerr Button
+            if (!document.getElementById('toggle-kerr')) {
+                const kerrButton = document.createElement('button');
+                kerrButton.id = 'toggle-kerr'; kerrButton.className = 'gitter-button bg-red-600 hover:bg-red-700'; kerrButton.textContent = 'Kerr-Ring Umschalten';
+                kerrButton.addEventListener('click', () => { kerrActive = !kerrActive; console.log("Kerr:", kerrActive); updateZoomInfo(); updateSuspicionLevel(); });
+                buttonRow.appendChild(kerrButton);
+            }
+            // Schaum Button
+            if (!document.getElementById('toggle-foam')) {
+                const foamButton = document.createElement('button');
+                foamButton.id = 'toggle-foam'; foamButton.className = 'gitter-button bg-teal-600 hover:bg-teal-700'; foamButton.textContent = 'Schaum-Modus';
+                foamButton.addEventListener('click', () => { foamActive = !foamActive; console.log("Schaum:", foamActive); updateZoomInfo(); updateSuspicionLevel(); });
+                buttonRow.appendChild(foamButton);
+            }
+            // Glätte Button
+            if (!document.getElementById('toggle-smooth')) {
+                const smoothButton = document.createElement('button');
+                smoothButton.id = 'toggle-smooth'; smoothButton.className = 'gitter-button bg-cyan-600 hover:bg-cyan-700';
+                smoothButton.textContent = 'Glätte-Modus';
+                smoothButton.addEventListener('click', () => {
+                    smoothActive = !smoothActive; console.log("Glätte:", smoothActive); updateZoomInfo(); updateTorsionBoundaryVisibility(); updateSuspicionLevel();
+                    gridGroup?.children.forEach(cube => { cube.material.needsUpdate = true; });
+                });
+                buttonRow.appendChild(smoothButton);
+            }
+        }
+
+
+        // Aktualisiert die Zoom-Info Anzeige (mit Glätte statt Grav/Chaos)
+        function updateZoomInfo() {
+            const zoomInfo = document.getElementById('zoom-info');
+            if (zoomInfo) {
+                let modes = [];
+                if (smoothActive) modes.push('Glätte');
+                else { // Nur andere Basis-Modi anzeigen, wenn Glätte aus ist
+                    if (isNonCom) modes.push('Nicht-Kommutativ');
+                    if (foamActive) modes.push('Schaum');
+                }
+                if (ctcActive) modes.push('CTCs');
+                if (kerrActive) modes.push('Kerr-Ring');
+                if (smoothActive && currentZoom >= 4.0) modes.push('Torsions-Grenze');
+                if (currentZoom >= 4.5) modes.push('Planck-Ansicht');
+                modes.push(`Λ(t)=${lambdaValue.toFixed(2)}`); // Immer Lambda anzeigen
+                zoomInfo.textContent = `Zoom: ${currentZoom.toFixed(1)}x | Modus: ${modes.length > 0 ? modes.join(', ') : 'Standard'}`;
+            }
+        }
+
+        // Zeigt/Versteckt die Torsionsgrenze (abhängig von smoothActive)
+        function updateTorsionBoundaryVisibility() {
+             const existingBoundary = scene?.getObjectByName('torsionBoundary');
+             if (smoothActive && currentZoom >= 4.0) {
+                 if (!existingBoundary && scene) {
+                     const boundaryGeometry = new THREE.SphereGeometry(1.5, 16, 16);
+                     const boundaryMaterial = new THREE.MeshBasicMaterial({ color: 0xffa500, wireframe: true, opacity: 0.4, transparent: true, depthWrite: false });
+                     torsionBoundarySphere = new THREE.Mesh(boundaryGeometry, boundaryMaterial);
+                     torsionBoundarySphere.name = 'torsionBoundary';
+                     torsionBoundarySphere.position.set(0, 0, 0);
+                     scene.add(torsionBoundarySphere);
+                     console.log("Torsion boundary added");
+                 }
+             } else {
+                 if (existingBoundary && scene) {
+                     scene.remove(existingBoundary);
+                     torsionBoundarySphere = null;
+                     console.log("Torsion boundary removed");
+                 }
+             }
+        }
+
+
+        // Funktion zur Aktualisierung der Gitter-Entropie/Farbe (mit Dämpfung für Glätte & Lambda)
+        function updateGridEntropy(centerX, centerY, centerZ, mass) {
+            const maxRadius = 5;
+            const spin = parseFloat(document.getElementById('param-spin')?.value) || 0;
+            const maxEntropy = calculateKerrEntropy(mass, spin);
+            const entropyScaleFactor = maxEntropy > 0 ? 1 / (maxEntropy * 0.8 + 1e-20) : 1;
+            if (!gridGroup) return;
+
+            gridGroup.children.forEach(cube => {
+                const dx = cube.userData.gridX - centerX; const dy = cube.userData.gridY - centerY; const dz = cube.userData.gridZ - centerZ;
+                const distance = Math.sqrt(dx*dx + dy*dy + dz*dz);
+                let entropy = 0;
+                if (distance < maxRadius) { entropy = Math.max(0, maxEntropy * (1 - distance / maxRadius)); }
+
+                // Entropie mit Lambda(t) skalieren
+                entropy *= lambdaValue;
+
+                // Entropie extrem dämpfen, wenn Glätte aktiv ist
+                if (smoothActive) {
+                    // Stärkere Dämpfung bei niedrigem Lambda im Glätte-Modus
+                    entropy *= (1 - lambdaValue) * 0.001; // Kombinierte Dämpfung
+                }
+
+                cube.userData.entropy = entropy;
+                const normalizedEntropy = Math.min(1, Math.max(0, entropy * entropyScaleFactor));
+                const hue = 0.66 - (normalizedEntropy * 0.66); // Blau -> Rot
+
+                if (cube.material && typeof cube.material.color?.setHSL === 'function') {
+                    // Farbe nur ändern, wenn KEIN spezieller Modus (CTC/Kerr/Smooth) aktiv ist, der die Farbe überschreibt
+                    if (!((ctcActive && cube.userData.isCTC) || (kerrActive && cube.userData.isKerr) || smoothActive)) {
+                        cube.material.color.setHSL(hue, 0.8, 0.5);
+                        cube.material.needsUpdate = true;
+                    }
+                } else { console.warn("Material oder Farbe nicht gefunden für Cube:", cube); }
+            });
+            // console.log(`Gitter-Entropie aktualisiert für Masse: ${mass.toExponential(2)} kg`);
+        }
+
+        // Kerr Entropie Berechnung
+        function calculateKerrEntropy(mass, spin) {
+             if (mass <= 0 || spin < 0 || spin > 1) return 0;
+             const M = mass;
+             const a = spin * G * M / c;
+             const r_plus_sq_term = Math.max(0, (G**2 * M**2 / c**4) - (a**2 / c**2));
+             const r_plus = (G * M / (c**2)) + Math.sqrt(r_plus_sq_term);
+             const area = 4 * Math.PI * (r_plus**2 + (a / c)**2);
+             const entropy = (c**3 * area) / (4 * G * hbar);
+             return entropy;
+        }
+
+        // NEU: Aktualisiert die Effizienz-Anzeige
+        function updateEfficiencyInfo() {
+            const efficiencyDiv = document.getElementById('efficiency-info');
+            if (!efficiencyDiv) return;
+            const efficiency = (1 - lambdaValue) * 100;
+            let efficiencyText = `Effizienz: ${efficiency.toFixed(0)}%`;
+            if (smoothActive) efficiencyText += ' (Glatt)';
+            efficiencyDiv.textContent = efficiencyText;
+        }
+
+
+        // --- Event Listener Setup ---
+        function setupEventListeners() {
+            const listElement = document.getElementById('evidence-list');
+            listElement?.addEventListener('click', (event) => {
+                const card = event.target.closest('.evidence-card');
+                if (card && card.dataset.id) { displayEvidenceDetail(card.dataset.id); }
+            });
+
+            document.getElementById('category-filter')?.addEventListener('change', populateEvidenceList);
+            document.getElementById('search-evidence')?.addEventListener('input', populateEvidenceList);
+
+            document.getElementById('toggle-noncom')?.addEventListener('click', () => {
+                isNonCom = !isNonCom; console.log("Nicht-Kommutativität:", isNonCom); updateZoomInfo(); updateSuspicionLevel();
+                 gridGroup?.children.forEach(cube => { cube.material.needsUpdate = true; });
+            });
+
+            document.getElementById('add-mass')?.addEventListener('click', () => {
+                 console.log("Simuliere Masse hinzufügen...");
+                 const center = Math.floor(GRID_SIZE / 2); const massEffectRadius = 3; const distortionStrength = -0.5;
+                 if (!gridGroup) return;
+                 gridGroup.children.forEach(cube => {
+                     const dx = cube.userData.gridX - center; const dy = cube.userData.gridY - center; const dz = cube.userData.gridZ - center;
+                     const distance = Math.sqrt(dx*dx + dy*dy + dz*dz);
+                     if (distance < massEffectRadius) {
+                         const distortion = distortionStrength * Math.pow(1 - distance / massEffectRadius, 2);
+                         cube.userData.baseY = cube.userData.originalY + distortion;
+                     } else {
+                         cube.userData.baseY = cube.userData.originalY;
+                     }
+                      cube.material.needsUpdate = true;
+                 });
+                 const exampleMass = parseFloat(document.getElementById('param-mass')?.value) || 1e15;
+                 updateGridEntropy(center, center, center, exampleMass);
+            });
+
+             document.getElementById('apply-code-params')?.addEventListener('click', () => {
+                 const massInput = document.getElementById('param-mass'); const spinInput = document.getElementById('param-spin');
+                 const outputElement = document.getElementById('code-output');
+                 const massValue = parseFloat(massInput?.value) || 0; const spinValue = parseFloat(spinInput?.value) || 0;
+
+                 if (outputElement && massValue > 0 && spinValue >= 0 && spinValue <= 1) {
+                    const entropy = calculateKerrEntropy(massValue, spinValue);
+                    outputElement.textContent = `Berechnete Kerr-Entropie für Masse ${massValue.toExponential(2)} kg, Spin ${spinValue}: ${entropy.toExponential(2)}`;
+                    const center = Math.floor(GRID_SIZE / 2);
+                    updateGridEntropy(center, center, center, massValue);
+                 } else if (outputElement) { outputElement.textContent = "Bitte gültige Werte für Masse (>0) und Spin (0-1) eingeben."; }
+             });
+
+             // Event Listener für Torsions-Tests
+             document.getElementById('test-inv-square')?.addEventListener('click', () => {
+                 const outputElement = document.getElementById('torsion-output');
+                 if (outputElement) {
+                     const m1 = 1e-3; const m2 = 1e-3; const dist = 30e-6;
+                     const force = (G * m1 * m2) / (dist * dist); const threshold = 1e-14;
+                     outputElement.textContent = force < threshold ?
+                         `Test 1/r² bei ${dist.toExponential(1)} m: Kraft ≈ ${force.toExponential(2)} N (unterhalb Messgrenze ${threshold.toExponential(1)} N, keine Abweichung nachweisbar)` :
+                         `Test 1/r² bei ${dist.toExponential(1)} m: Kraft ≈ ${force.toExponential(2)} N (über Messgrenze, keine Abweichung gefunden)`;
+                 }
+             });
+             document.getElementById('test-equiv')?.addEventListener('click', () => {
+                 const outputElement = document.getElementById('torsion-output');
+                  if (outputElement) {
+                      const m_grav = 1.0; const m_inertia = 1.0;
+                      const ratio = m_grav / m_inertia; const deviation = Math.abs(1 - ratio); const precision = 1e-12;
+                      outputElement.textContent = deviation < precision ?
+                         `Test Äquivalenzprinzip: Verhältnis m_grav/m_inertia ≈ ${ratio.toFixed(14)}, Abweichung ${deviation.toExponential(1)} < ${precision.toExponential(1)} (Bestätigt)`:
+                         `Test Äquivalenzprinzip: Verhältnis m_grav/m_inertia ≈ ${ratio.toFixed(14)}, Abweichung ${deviation.toExponential(1)} > ${precision.toExponential(1)} (Widerspricht Experimenten!)`;
+                  }
+             });
+
+             // Event Listener für Glätte-Test Button
+             document.getElementById('test-smooth')?.addEventListener('click', () => {
+                 const outputElement = document.getElementById('torsion-output');
+                 if (outputElement) {
+                     const x = Math.floor(GRID_SIZE / 2); const y = Math.floor(GRID_SIZE / 2);
+                     const initial = Math.random() * 1e-34;
+                     const optimized = Math.round(initial / PLANCK_LENGTH) * PLANCK_LENGTH;
+                     outputElement.textContent = `Glätte-Optimierung an (${x}, ${y}): Zustand von ${initial.toExponential(2)} zu ${optimized.toExponential(2)} (Rauschen entfernt, simuliert Effizienz)`;
+                 }
+             });
+
+             // Event Listener für Lambda-Slider
+             const lambdaSlider = document.getElementById('lambda-slider');
+             lambdaSlider?.addEventListener('input', (e) => {
+                 if (lambdaIntervalId) {
+                     clearInterval(lambdaIntervalId); lambdaIntervalId = null;
+                     const runbackBtn = document.getElementById('lambda-runback');
+                     if(runbackBtn) { runbackBtn.textContent = 'Starte Λ(t) Rücklauf'; runbackBtn.disabled = false; }
+                     lambdaSlider.disabled = false;
+                 }
+                 lambdaValue = parseFloat(e.target.value);
+                 const lambdaValueDisplay = document.getElementById('lambda-value');
+                 if(lambdaValueDisplay) lambdaValueDisplay.textContent = lambdaValue.toFixed(2);
+                 updateZoomInfo();
+                 const center = Math.floor(GRID_SIZE / 2);
+                 const mass = parseFloat(document.getElementById('param-mass')?.value) || 1e15;
+                 updateGridEntropy(center, center, center, mass);
+                 updateTotalScore();
+                 updateSuspicionLevel();
+             });
+
+             // Event Listener für Lambda-Test Button
+             document.getElementById('test-lambda')?.addEventListener('click', () => {
+                 const outputElement = document.getElementById('torsion-output');
+                 if (outputElement) {
+                     const lambda_t = lambdaValue;
+                     const old_lambda = 1.0; // Fester Startwert für Demo
+                     const expansion_rate = c * lambda_t; // Vereinfacht
+                     const smoothness_factor = 1 - lambda_t; // NEU
+                     outputElement.textContent = `Λ(t)-Hotfix: Dunkle Energie von ${old_lambda.toFixed(2)} zu ${lambda_t.toFixed(2)}, Expansion ≈ ${expansion_rate.toExponential(2)} m/s, Glättungsfaktor: ${smoothness_factor.toFixed(2)} (LOD-Optimierung?)`;
+                 }
+             });
+
+             // Event Listener für Lambda Rücklauf Button
+             document.getElementById('lambda-runback')?.addEventListener('click', (e) => {
+                 const button = e.target;
+                 const slider = document.getElementById('lambda-slider');
+                 if (!slider) return;
+
+                 if (lambdaIntervalId) { // Stoppe den Rücklauf
+                     clearInterval(lambdaIntervalId); lambdaIntervalId = null;
+                     button.textContent = 'Starte Λ(t) Rücklauf'; button.disabled = false; slider.disabled = false;
+                     console.log("Lambda runback stopped.");
+                 } else { // Starte den Rücklauf
+                     button.textContent = 'Stoppe Rücklauf'; button.disabled = true; slider.disabled = true;
+                     console.log("Lambda runback started.");
+                     lambdaIntervalId = setInterval(() => {
+                         lambdaValue -= 0.01;
+                         if (lambdaValue < 0) {
+                             lambdaValue = 0; clearInterval(lambdaIntervalId); lambdaIntervalId = null;
+                             button.textContent = 'Starte Λ(t) Rücklauf'; button.disabled = false; slider.disabled = false;
+                             console.log("Lambda runback finished.");
+                         }
+                         slider.value = lambdaValue;
+                         const lambdaValueDisplay = document.getElementById('lambda-value');
+                         if(lambdaValueDisplay) lambdaValueDisplay.textContent = lambdaValue.toFixed(2);
+                         updateZoomInfo();
+                         const center = Math.floor(GRID_SIZE / 2);
+                         const mass = parseFloat(document.getElementById('param-mass')?.value) || 1e15;
+                         updateGridEntropy(center, center, center, mass);
+                         updateTotalScore();
+                         updateSuspicionLevel();
+                     }, 100); // Intervallzeit (ms)
+                 }
+             });
+        }
+
+        // Fügt Glätte-Test und Lambda-Test Buttons zum Code-Bereich hinzu
+        function addCodeTestButtons() {
+             const container = document.getElementById('test-buttons-container');
+             if (!container) return;
+
+             document.getElementById('test-chaos')?.remove(); // Entferne alten Chaos-Button
+
+             if (!document.getElementById('test-smooth')) {
+                 const smoothTestButton = document.createElement('button');
+                 smoothTestButton.id = 'test-smooth';
+                 smoothTestButton.className = 'text-xs bg-cyan-600 hover:bg-cyan-700 text-white py-1 px-3 rounded';
+                 smoothTestButton.textContent = 'Test Glätte';
+                 container.appendChild(smoothTestButton);
+             }
+             if (!document.getElementById('test-lambda')) {
+                 const lambdaTestButton = document.createElement('button');
+                 lambdaTestButton.id = 'test-lambda';
+                 lambdaTestButton.className = 'text-xs bg-purple-600 hover:bg-purple-700 text-white py-1 px-3 rounded';
+                 lambdaTestButton.textContent = 'Test Λ(t)';
+                 container.appendChild(lambdaTestButton);
+             }
+        }
+
+         // Wendet den Lambda-Effekt auf das Gitter an
+         function updateLambdaEffect() {
+             if (!gridGroup) return;
+             const expansionFactor = lambdaValue;
+
+             gridGroup.children.forEach(cube => {
+                 const targetX = cube.userData.originalX * expansionFactor;
+                 const targetY = cube.userData.baseY * expansionFactor;
+                 const targetZ = cube.userData.originalZ * expansionFactor;
+                 // Setze die Basis-Position für diesen Frame
+                 cube.position.set(targetX, targetY, targetZ);
+             });
+         }
+
+         // NEU: Aktualisiert die Effizienz-Anzeige
+         function updateEfficiencyInfo() {
+            const efficiencyDiv = document.getElementById('efficiency-info');
+            if (!efficiencyDiv) return;
+            const efficiency = (1 - lambdaValue) * 100;
+            let efficiencyText = `Effizienz: ${efficiency.toFixed(0)}%`;
+            if (smoothActive) efficiencyText += ' (Glatt)';
+            efficiencyDiv.textContent = efficiencyText;
+        }
+
+    </script>
+
+</body>
+</html>
