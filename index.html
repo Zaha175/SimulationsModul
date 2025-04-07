@@ -52,13 +52,12 @@
             overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;
         }
         #gittermodell-container {
-            /* Angepasste Höhe für breiteres Layout */
             min-height: 450px;
-            height: 60vh; /* Nimmt mehr vertikalen Raum ein */
+            height: 60vh;
             background-color: #111827;
             border-radius: 0.5rem; border: 1px solid #374151;
             position: relative; overflow: hidden; cursor: grab;
-            width: 100%; /* Nimmt volle Breite im neuen Layout */
+            width: 100%;
         }
         #gittermodell-container:active { cursor: grabbing; }
         #zoom-info, #efficiency-info {
@@ -94,9 +93,8 @@
          #score-area {
              transition: background-color 0.5s ease-out;
          }
-         /* Styling für Quellcode-Sektion */
          #quellcode-section {
-             background-color: #1f2937; /* Dunklerer Hintergrund für Abgrenzung */
+             background-color: #1f2937;
              border: 1px solid #374151;
              border-radius: 0.5rem;
          }
@@ -134,13 +132,12 @@
         <div class="space-y-8 mb-8"> <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
                 <h2 class="text-xl font-semibold mb-3 text-indigo-300 text-center">Interaktives Gittermodell (Raumzeit)</h2>
                 <div id="gittermodell-container">
-                    <div id="zoom-info">Zoom: 1.0x | Modus: Standard | Λ(t)=0.75</div>
-                    <div id="efficiency-info">Glättung: 25%</div> </div>
+                    <!-- Info divs will be added by JS -->
+                </div>
                 <div id="gitter-controls" class="mt-4 flex flex-col items-center gap-2">
                      <div class="flex flex-wrap gap-2 justify-center">
-                        <button id="toggle-noncom" class="gitter-button bg-purple-600 hover:bg-purple-700">Nicht-Kommutativität</button>
-                        <button id="add-mass" class="gitter-button bg-green-600 hover:bg-green-700">"Masse" Hinzufügen</button>
-                        </div>
+                        <!-- Control buttons will be added by JS -->
+                     </div>
                     <div class="mt-4 w-full max-w-xs">
                          <label for="lambda-slider" class="block text-sm font-medium text-indigo-300 mb-1 text-center">Dunkle Energie Λ(t): <span id="lambda-value">0.75</span></label> <input type="range" id="lambda-slider" min="0" max="1" value="0.75" step="0.05" class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer"> <div class="flex justify-between text-xs text-gray-500 mt-1 px-1">
                              <span>Frühes Universum</span>
@@ -287,6 +284,7 @@
                         <button id="apply-code-params" class="text-xs bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded">Parameter Anwenden & Kerr-Entropie Berechnen</button>
                          <p id="code-output" class="text-xs text-cyan-400 mt-2 h-10 overflow-y-auto"></p> <div class="flex gap-2 mt-2 flex-wrap" id="test-buttons-container"> <button id="test-inv-square" class="text-xs bg-orange-600 hover:bg-orange-700 text-white py-1 px-3 rounded">Test 1/r² (30µm)</button>
                              <button id="test-equiv" class="text-xs bg-orange-600 hover:bg-orange-700 text-white py-1 px-3 rounded">Test Äquivalenz</button>
+                             <!-- Code test buttons added by JS -->
                              </div>
                          <p id="torsion-output" class="text-xs text-amber-400 mt-2 h-10 overflow-y-auto"></p> </div>
                 </div>
@@ -343,7 +341,7 @@
         let kerrActive = false;
         let foamActive = false;
         let smoothActive = false;
-        let lambdaValue = 0.75; // Startwert angepasst
+        let lambdaValue = 0.75; // Startwert
         let lambdaIntervalId = null;
         let ctcCubes = [];
         let kerrCubes = [];
@@ -361,7 +359,7 @@
             populateCategories();
             populateEvidenceList();
             setupEventListeners();
-            initGittermodell();
+            initGittermodell(); // Initialisiert auch Zoom/Efficiency Info Divs
             addGitterControlButtons();
             addCodeTestButtons();
             updateTotalScore();
@@ -380,6 +378,7 @@
             const filterSelect = document.getElementById('category-filter');
             if (!filterSelect) return;
             const categories = [...new Set(evidenceData.map(item => item.category))];
+            // Clear existing options except the first one ("Alle Kategorien")
             while (filterSelect.options.length > 1) { filterSelect.remove(1); }
             categories.sort().forEach(category => {
                 const option = document.createElement('option');
@@ -399,7 +398,7 @@
             let hasVisibleItems = false;
             evidenceData.forEach(item => {
                 const categoryMatch = categoryFilter === 'all' || item.category === categoryFilter;
-                const searchMatch = item.title.toLowerCase().includes(searchQuery);
+                const searchMatch = item.title.toLowerCase().includes(searchQuery) || item.description.toLowerCase().includes(searchQuery) || item.category.toLowerCase().includes(searchQuery);
 
                 if (categoryMatch && searchMatch) {
                     const card = document.createElement('div');
@@ -413,6 +412,7 @@
                     category.textContent = `Kategorie: ${item.category}`;
                     card.appendChild(title); card.appendChild(category); listElement.appendChild(card);
                     hasVisibleItems = true;
+                     // Highlight selected card
                      if (item.id === selectedEvidenceId) {
                          card.classList.add('ring-2', 'ring-indigo-500');
                      }
@@ -430,6 +430,7 @@
             const detailElement = document.getElementById('evidence-detail');
             if (!detailElement || !item) return;
 
+            // Re-populate list to update highlight
             populateEvidenceList();
 
             detailElement.innerHTML = `
@@ -446,6 +447,7 @@
                 <p class="text-xs text-gray-500 mt-2">Relevanz (intern): ${ (item.relevance * 100).toFixed(0) }%</p>
             `;
 
+            // Add event listener to the new slider
             const slider = detailElement.querySelector(`#scale-${item.id}`);
             const valueDisplay = detailElement.querySelector(`#scale-value-${item.id}`);
             slider?.addEventListener('input', (event) => {
@@ -474,10 +476,13 @@
                 }
             });
 
+            // Calculate base average score
             const averageScore = totalRelevance > 0 ? (totalWeightedScore / totalRelevance) : 0;
-            const lambdaModifier = (1 - lambdaValue) * 2.0; // Low Lambda = High Bonus
+            // Calculate Lambda modifier (more bonus for lower Lambda)
+            const lambdaModifier = (1 - lambdaValue) * 2.0; // Max bonus of +2.0 when Lambda=0
+            // Apply modifier and cap score between 0 and 10
             const modifiedScore = Math.min(10, Math.max(0, averageScore + lambdaModifier));
-            const finalScore = Math.round(modifiedScore * 10) / 10;
+            const finalScore = Math.round(modifiedScore * 10) / 10; // Round to one decimal place
 
             const scoreDisplay = document.getElementById('total-score');
             const scoreBarFill = document.getElementById('score-bar-fill');
@@ -492,16 +497,17 @@
                 if (topContributor && topContributor.title !== 'N/A') {
                     feedbackText += `<br>Stärkster Einflussfaktor (Basis): ${topContributor.title} (Score: ${topContributor.scale}, Relevanz: ${(topContributor.relevance*100).toFixed(0)}%)`;
                 }
+                // Show modifier only if it's applied (Lambda < 1)
                 if (lambdaValue < 1.0) {
                      feedbackText += `<br>Λ(t)-Modifikator: +${lambdaModifier.toFixed(1)} (wegen niedrigem Λ(t)=${lambdaValue.toFixed(2)})`;
                 }
                 scoreFeedback.innerHTML = feedbackText;
             }
 
-             // Hintergrundfarbe des Score-Bereichs basierend auf Lambda ändern (nur während Runback?)
+             // Change background color of score area based on Lambda during runback
              if (scoreArea && lambdaIntervalId) {
-                 const suspicionRatio = 1 - lambdaValue; // 0 (Lambda=1) bis 1 (Lambda=0)
-                 // Interpoliere von Grau (rgb(31, 41, 55)) zu Rot (rgb(185, 28, 28) - tailwind red-700)
+                 const suspicionRatio = 1 - lambdaValue; // 0 (Lambda=1) to 1 (Lambda=0)
+                 // Interpolate from default Gray-800 (rgb(31, 41, 55)) to Red-700 (rgb(185, 28, 28))
                  const grayR = 31, grayG = 41, grayB = 55;
                  const redR = 185, redG = 28, redB = 28;
                  const r = Math.round(grayR + suspicionRatio * (redR - grayR));
@@ -509,8 +515,8 @@
                  const b = Math.round(grayB + suspicionRatio * (redB - grayB));
                  scoreArea.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
              } else if (scoreArea) {
-                 // Reset zu Standard-Grau, wenn nicht im Runback
-                 scoreArea.style.backgroundColor = 'rgb(31, 41, 55)'; // Tailwind gray-800
+                 // Reset to default Gray-800 when not in runback
+                 scoreArea.style.backgroundColor = ''; // Use default CSS
              }
         }
 
@@ -519,7 +525,7 @@
             const suspicionElement = document.getElementById('suspicion-level');
             if (!suspicionElement) return;
 
-            const currentSuspicion = calculateCurrentSuspicion(); // Hole aktuellen Wert
+            const currentSuspicion = calculateCurrentSuspicion(); // Get current suspicion value
 
             let suspicionText, suspicionColor;
             if (currentSuspicion >= 80) {
@@ -534,21 +540,21 @@
             suspicionElement.textContent = `${suspicionText} [${currentSuspicion.toFixed(0)}%]`;
             suspicionElement.className = `text-center text-xl mt-3 font-bold ${suspicionColor}`;
 
-            // Update Heatmap, wenn aktiv
+            // Update Heatmap, if active
             if (heatmapActive) {
                 updateHeatmapColors(currentSuspicion);
             }
         }
 
-
-        // --- Gittermodell Initialisierung & Funktionen (Three.js) ---
         // Helper function for color interpolation
         function interpolateColor(hex1, hex2, factor) {
             const c1 = new THREE.Color(hex1);
             const c2 = new THREE.Color(hex2);
-            return c1.lerp(c2, factor).getHex();
+            return c1.lerp(c2, Math.max(0, Math.min(1, factor))).getHex(); // Clamp factor 0-1
         }
 
+
+        // --- Gittermodell Initialisierung & Funktionen (Three.js) ---
         function initGittermodell() {
             const container = document.getElementById('gittermodell-container');
             if (!container) return;
@@ -556,27 +562,32 @@
             ctcCubes = []; kerrCubes = []; // Reset arrays
 
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x111827);
+            scene.background = new THREE.Color(0x111827); // Tailwind gray-900
             camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
             camera.position.z = 15; camera.position.y = 5;
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(container.clientWidth, container.clientHeight);
-            container.innerHTML = '';
+            container.innerHTML = ''; // Clear previous content
             container.appendChild(renderer.domElement);
+
+            // Add Info Overlays
             const zoomInfoDiv = document.createElement('div');
             zoomInfoDiv.id = 'zoom-info';
-            zoomInfoDiv.textContent = `Zoom: ${currentZoom.toFixed(1)}x | Modus: Standard | Λ(t)=${lambdaValue.toFixed(2)}`; // Init mit Lambda
             container.appendChild(zoomInfoDiv);
+
             const efficiencyDiv = document.createElement('div');
             efficiencyDiv.id = 'efficiency-info';
-            efficiencyDiv.style.cssText = 'position: absolute; top: 10px; right: 10px; display: flex; align-items: center; gap: 8px; background-color: rgba(0, 0, 0, 0.7); color: #a5f3fc; padding: 5px 10px; border-radius: 4px; font-size: 0.75rem; z-index: 10; pointer-events: none;'; // Flex für Bar+Text
             container.appendChild(efficiencyDiv);
-            updateEfficiencyInfo(); // Initialer Aufruf
 
+            // Initial update for overlays
+            updateZoomInfo();
+            updateEfficiencyInfo();
 
+            // Lighting
             const ambientLight = new THREE.AmbientLight(0x606060); scene.add(ambientLight);
             const directionalLight = new THREE.DirectionalLight(0xffffff, 0.9); directionalLight.position.set(5, 10, 7.5); scene.add(directionalLight);
 
+            // Grid Creation
             gridGroup = new THREE.Group();
             const geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
             const center = Math.floor(GRID_SIZE / 2);
@@ -584,182 +595,256 @@
             for (let x = 0; x < GRID_SIZE; x++) {
                 for (let y = 0; y < GRID_SIZE; y++) {
                     for (let z = 0; z < GRID_SIZE; z++) {
-                        const material = new THREE.MeshStandardMaterial({ color: 0x3b82f6, transparent: true, opacity: 0.6, roughness: 0.7, metalness: 0.2 });
+                        const material = new THREE.MeshStandardMaterial({
+                            color: 0x3b82f6, // Default Blue
+                            transparent: true,
+                            opacity: 0.6,
+                            roughness: 0.7,
+                            metalness: 0.2
+                        });
                         const cube = new THREE.Mesh(geometry, material);
                         const posX = (x - GRID_SIZE / 2) * GRID_SPACING;
                         const posY = (y - GRID_SIZE / 2) * GRID_SPACING;
                         const posZ = (z - GRID_SIZE / 2) * GRID_SPACING;
                         cube.position.set(posX, posY, posZ);
-                        cube.userData = { gridX: x, gridY: y, gridZ: z, originalX: posX, originalY: posY, originalZ: posZ, baseY: posY, entropy: 0, isCTC: false, ctcAngle: 0, isKerr: false, kerrAngle: 0 };
+                        cube.userData = {
+                            gridX: x, gridY: y, gridZ: z,
+                            originalX: posX, originalY: posY, originalZ: posZ,
+                            baseY: posY, // For mass effect
+                            entropy: 0,
+                            isCTC: false, ctcAngle: 0,
+                            isKerr: false, kerrAngle: 0
+                        };
 
-                        if (Math.random() < 0.01) { cube.userData.isCTC = true; cube.userData.ctcAngle = Math.random() * Math.PI * 2; ctcCubes.push(cube); }
-                        const dx = x - center; const dz = z - center; const distXZ = Math.sqrt(dx*dx + dz*dz);
-                        if (Math.abs(distXZ - KERR_RING_RADIUS / GRID_SPACING) < 0.5 && Math.abs(y - center) < 1) { cube.userData.isKerr = true; cube.userData.kerrAngle = Math.atan2(dz, dx); kerrCubes.push(cube); }
+                        // Randomly mark some as CTC candidates
+                        if (Math.random() < 0.01) {
+                            cube.userData.isCTC = true;
+                            cube.userData.ctcAngle = Math.random() * Math.PI * 2;
+                            ctcCubes.push(cube);
+                        }
+                        // Mark cubes near the Kerr ring radius
+                        const dx = x - center; const dz = z - center;
+                        const distXZ = Math.sqrt(dx*dx + dz*dz);
+                        if (Math.abs(distXZ - KERR_RING_RADIUS / GRID_SPACING) < 0.5 && Math.abs(y - center) < 1) {
+                            cube.userData.isKerr = true;
+                            cube.userData.kerrAngle = Math.atan2(dz, dx);
+                            kerrCubes.push(cube);
+                        }
                         gridGroup.add(cube);
                     }
                 }
             }
             scene.add(gridGroup);
 
-            // Kamera-Steuerung
-            let isDragging = false; let previousMousePosition = { x: 0, y: 0 };
-            container.addEventListener('mousedown', (e) => { isDragging = true; previousMousePosition = { x: e.clientX, y: e.clientY }; container.style.cursor = 'grabbing'; });
-            container.addEventListener('mouseup', () => { isDragging = false; container.style.cursor = 'grab'; });
-            container.addEventListener('mouseleave', () => { isDragging = false; container.style.cursor = 'grab'; });
+            // Camera Controls (Drag to Rotate)
+            let isDragging = false;
+            let previousMousePosition = { x: 0, y: 0 };
+            container.addEventListener('mousedown', (e) => {
+                 isDragging = true;
+                 previousMousePosition = { x: e.clientX, y: e.clientY };
+                 container.style.cursor = 'grabbing';
+            });
+            container.addEventListener('mouseup', () => {
+                isDragging = false;
+                container.style.cursor = 'grab';
+            });
+            container.addEventListener('mouseleave', () => { // Stop dragging if mouse leaves container
+                isDragging = false;
+                container.style.cursor = 'grab';
+            });
             container.addEventListener('mousemove', (e) => {
                 if (!isDragging) return;
                 const deltaMove = { x: e.clientX - previousMousePosition.x, y: e.clientY - previousMousePosition.y };
-                gridGroup.rotation.y += deltaMove.x * 0.005; gridGroup.rotation.x += deltaMove.y * 0.005;
+                gridGroup.rotation.y += deltaMove.x * 0.005;
+                gridGroup.rotation.x += deltaMove.y * 0.005;
+                // Clamp vertical rotation to avoid flipping upside down
                 gridGroup.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, gridGroup.rotation.x));
                 previousMousePosition = { x: e.clientX, y: e.clientY };
             });
 
-            // Zoom & Planck-Skala Effekt & Torsionsgrenze
+            // Zoom Controls (Scroll Wheel) & Planck Scale Effect
             container.addEventListener('wheel', (e) => {
-                e.preventDefault();
+                e.preventDefault(); // Prevent page scrolling
                 const zoomSpeed = 0.1;
-                currentZoom -= e.deltaY * zoomSpeed * 0.1;
-                currentZoom = Math.max(0.2, Math.min(5.0, currentZoom));
+                currentZoom -= e.deltaY * zoomSpeed * 0.1; // Adjust direction/sensitivity
+                currentZoom = Math.max(0.2, Math.min(5.0, currentZoom)); // Clamp zoom level
+                // Adjust camera position based on zoom
                 camera.position.z = 15 / currentZoom;
                 camera.position.y = 5 / currentZoom;
-                camera.lookAt(scene.position);
+                camera.lookAt(scene.position); // Ensure camera always points to the center
                 updateZoomInfo();
 
-                // Planck-Skala Zoom Effekt (Leicht abgeschwächt)
+                // Planck-Scale Zoom Effect (Wireframe and slight scale increase)
                 const isPlanckZoom = currentZoom >= 4.5;
                 gridGroup.children.forEach(cube => {
-                    cube.material.wireframe = isPlanckZoom;
-                    cube.scale.set(isPlanckZoom ? 1.05 : 1, isPlanckZoom ? 1.05 : 1, isPlanckZoom ? 1.05 : 1);
-                    cube.material.needsUpdate = true;
+                    if (cube.material) { // Check if material exists
+                        cube.material.wireframe = isPlanckZoom;
+                        cube.scale.set(isPlanckZoom ? 1.05 : 1, isPlanckZoom ? 1.05 : 1, isPlanckZoom ? 1.05 : 1);
+                        cube.material.needsUpdate = true;
+                    }
                 });
-                updateTorsionBoundaryVisibility();
+                updateTorsionBoundaryVisibility(); // Check torsion boundary visibility on zoom
             });
 
+            // Handle window resizing
             window.addEventListener('resize', onWindowResize, false);
             function onWindowResize() {
-                if (!container || !renderer) return;
-                const width = container.clientWidth; const height = container.clientHeight;
-                 if (width > 0 && height > 0) {
-                    camera.aspect = width / height; camera.updateProjectionMatrix(); renderer.setSize(width, height);
+                if (!container || !renderer || !camera) return;
+                const width = container.clientWidth;
+                const height = container.clientHeight;
+                 if (width > 0 && height > 0) { // Ensure valid dimensions
+                    camera.aspect = width / height;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(width, height);
                  }
             }
-             onWindowResize();
+             onWindowResize(); // Call once initially
 
-            function animate() {
-                requestAnimationFrame(animate);
-                const now = performance.now();
-
-                // 1. Apply base scaling/position from Lambda(t)
-                updateLambdaEffect();
-
-                // 2. Calculate current suspicion for heatmap
-                const currentSuspicion = calculateCurrentSuspicion();
-
-                gridGroup.children.forEach(cube => {
-                    let isHandledByMovementMode = (ctcActive && cube.userData.isCTC) || (kerrActive && cube.userData.isKerr);
-                    let isHandledByAppearanceMode = isHandledByMovementMode || heatmapActive || smoothActive;
-
-                    // Start with current position (already scaled by Lambda)
-                    let targetX = cube.position.x;
-                    let targetY = cube.position.y;
-                    let targetZ = cube.position.z;
-                    // Start with default appearance
-                    let targetColor = 0x3b82f6; // Default blue
-                    let targetOpacity = 0.6;
-                    let targetScale = currentZoom >= 4.5 ? 1.05 : 1;
-
-                    // Glätte-Modus (überschreibt Basis-Aussehen & statische Position, wenn KEINE Heatmap)
-                    if (smoothActive && !heatmapActive) {
-                        // Angepasste Glättungsformel für Opacity & Farbe
-                        const smoothnessFactor = Math.max(0, Math.min(1, (lambdaValue - 0.6) * 2.5)); // Wirkt erst ab 0.6
-                        targetOpacity = 0.6 + smoothnessFactor * 0.3; // Opacity steigt mit Lambda > 0.6
-                        targetColor = interpolateColor(0x3b82f6, 0x06b6d4, smoothnessFactor); // Interpoliert zu Cyan
-
-                        targetX = cube.userData.originalX * lambdaValue;
-                        targetZ = cube.userData.originalZ * lambdaValue;
-                        targetY = cube.userData.baseY * lambdaValue;
-                    }
-
-                    // CTC Animation (überschreibt Position und Farbe, wenn aktiv)
-                    if (ctcActive && cube.userData.isCTC) {
-                        const radius = 2 * lambdaValue;
-                        cube.userData.ctcAngle += 0.05;
-                        const angle = cube.userData.ctcAngle;
-                        targetX = cube.userData.originalX * lambdaValue + Math.cos(angle) * radius;
-                        targetZ = cube.userData.originalZ * lambdaValue + Math.sin(angle) * radius;
-                        targetY = cube.userData.baseY * lambdaValue;
-                        if (!heatmapActive) targetColor = 0xffff00; // Gelb (nur wenn keine Heatmap)
-                        targetOpacity = 0.7;
-                        isHandledByAppearanceMode = true;
-                    }
-
-                    // Kerr-Ring Animation (überschreibt Position, Farbe, Skalierung, wenn aktiv)
-                    if (kerrActive && cube.userData.isKerr) {
-                        const ringRadius = KERR_RING_RADIUS * lambdaValue;
-                        cube.userData.kerrAngle += 0.03;
-                        const angle = cube.userData.kerrAngle;
-                        targetX = Math.cos(angle) * ringRadius;
-                        targetZ = Math.sin(angle) * ringRadius;
-                        targetY = cube.userData.baseY * lambdaValue;
-                        targetScale = (currentZoom >= 4.5 ? 1.05 : 1) * (1 + Math.sin(angle * 2 + now / 500) * 0.2 * lambdaValue);
-                        if (!heatmapActive) targetColor = 0xff0000; // Rot (nur wenn keine Heatmap)
-                        targetOpacity = 0.7;
-                        isHandledByAppearanceMode = true;
-                    }
-
-                    // Schaum-Modus (nur wenn Glätte/Heatmap aus ist und nicht CTC/Kerr)
-                    if (foamActive && !smoothActive && !heatmapActive && !isHandledByMovementMode) {
-                        const noise = Math.sin(now * 0.001 + cube.userData.gridX * 0.5 + cube.userData.gridZ * 0.3) * 0.1;
-                        targetY += noise;
-                        targetOpacity = 0.3;
-                    }
-
-                    // Nicht-Kommutativität (nur wenn Glätte/Heatmap aus ist und nicht CTC/Kerr)
-                    if (isNonCom && !smoothActive && !heatmapActive && !isHandledByMovementMode) {
-                        const jitterAmount = 0.015;
-                        const deltaX = (Math.random() - 0.5) * jitterAmount;
-                        targetX += deltaX;
-                        targetZ += deltaX * 0.5;
-                    }
-
-                    // NEU: Ewige Glätte bei Lambda < 0.1 im Smooth-Modus
-                    if (smoothActive && lambdaValue < 0.1) {
-                        targetX = cube.userData.originalX * 0.1; // Feste kleine Position
-                        targetY = cube.userData.baseY * 0.1;
-                        targetZ = cube.userData.originalZ * 0.1;
-                        targetColor = 0x06b6d4; // Cyan
-                        targetOpacity = 1.0; // Voll opak
-                        targetScale = 0.5; // Klein
-                        isHandledByAppearanceMode = true; // Überschreibt alles andere
-                    }
-
-
-                    // Heatmap-Modus (überschreibt alle anderen Farben/Opacity, wenn aktiv)
-                    if (heatmapActive) {
-                        const suspicionHue = 0.66 - (currentSuspicion / 100) * 0.66; // Blau (0.66) zu Rot (0)
-                        targetColor = new THREE.Color().setHSL(suspicionHue, 0.8, 0.5).getHex();
-                        targetOpacity = 0.6 + (currentSuspicion / 100) * 0.3; // 0.6 bis 0.9
-                        isHandledByAppearanceMode = true; // Sicherstellen, dass diese Farbe/Opacity bleibt
-                    }
-
-                    // Setze finale Position, Farbe, Opazität, Skalierung
-                    cube.position.set(targetX, targetY, targetZ);
-                    cube.scale.set(targetScale, targetScale, targetScale);
-                    if (cube.material.color.getHex() !== targetColor) {
-                        cube.material.color.setHex(targetColor);
-                    }
-                    if (cube.material.opacity !== targetOpacity) {
-                         cube.material.opacity = targetOpacity;
-                    }
-                    cube.material.needsUpdate = true;
-
-                });
-
-                updateEfficiencyInfo(); // Update Effizienz-Anzeige in jedem Frame
-                renderer.render(scene, camera);
-            }
+            // Start the animation loop
             animate();
         }
+
+        // *** UPDATED animate Function with Baseline Smoothing ***
+        function animate() {
+            requestAnimationFrame(animate); // Loop
+            const now = performance.now();
+
+            // 1. Apply base scaling/position from Lambda(t) first
+            updateLambdaEffect();
+
+            // 2. Calculate current suspicion for heatmap mode
+            const currentSuspicion = calculateCurrentSuspicion();
+
+            // 3. *** Baseline Smoothing Calculation ***
+            const baseSmoothness = 0.8; // Baseline: 80% Glättung bei Lambda=0.75
+            // Calculate current smoothness factor based on Lambda
+            // Formula: base + (range_to_100%) * (progress_of_lambda_towards_0)
+            const smoothnessFactor = baseSmoothness + (1.0 - baseSmoothness) * (1.0 - lambdaValue);
+
+            // 4. Update each cube
+            gridGroup.children.forEach(cube => {
+                if (!cube.userData || !cube.material) return; // Safety check
+
+                // Determine if cube's state is controlled by specific movement/appearance modes
+                let isHandledByMovementMode = (ctcActive && cube.userData.isCTC) || (kerrActive && cube.userData.isKerr);
+                let isHandledByAppearanceMode = isHandledByMovementMode || heatmapActive || smoothActive;
+
+                // Start with current position (already scaled by Lambda in updateLambdaEffect)
+                let targetX = cube.position.x;
+                let targetY = cube.position.y;
+                let targetZ = cube.position.z;
+                // Start with default appearance
+                let targetColor = 0x3b82f6; // Default blue
+                let targetOpacity = 0.6;
+                let targetScale = currentZoom >= 4.5 ? 1.05 : 1; // Base scale from zoom
+
+                // --- Apply Mode Effects (Order Matters - Specific overrides General) ---
+
+                // A. Smooth Mode (Overrides default appearance, uses smoothnessFactor)
+                if (smoothActive && !heatmapActive) {
+                    // Opacity increases from 0.6 towards 0.9 as smoothness increases above baseline
+                    // Using the user's suggested factor 1.5 for scaling
+                    targetOpacity = 0.6 + (smoothnessFactor - baseSmoothness) * 1.5;
+                    targetOpacity = Math.min(0.9, Math.max(0.6, targetOpacity)); // Clamp opacity 0.6-0.9
+
+                    // Color interpolates from Blue to Cyan based on the overall smoothnessFactor
+                    targetColor = interpolateColor(0x3b82f6, 0x06b6d4, smoothnessFactor);
+
+                    // Position is directly determined by Lambda scaling (already applied by updateLambdaEffect)
+                    // No further position change needed here for base smooth mode
+                }
+
+                // B. CTC Animation (Overrides position and potentially color/opacity if not heatmap)
+                if (ctcActive && cube.userData.isCTC) {
+                    const radius = 2 * lambdaValue; // Radius shrinks with Lambda
+                    cube.userData.ctcAngle += 0.05; // Rotation speed
+                    const angle = cube.userData.ctcAngle;
+                    // Calculate orbital position around the scaled original position
+                    targetX = cube.userData.originalX * lambdaValue + Math.cos(angle) * radius;
+                    targetZ = cube.userData.originalZ * lambdaValue + Math.sin(angle) * radius;
+                    targetY = cube.userData.baseY * lambdaValue; // Y position still follows Lambda scaling
+                    if (!heatmapActive) targetColor = 0xffff00; // Yellow (only if not in heatmap mode)
+                    targetOpacity = 0.7;
+                    isHandledByAppearanceMode = true; // Mark as handled
+                }
+
+                // C. Kerr Ring Animation (Overrides position, scale, potentially color/opacity if not heatmap)
+                if (kerrActive && cube.userData.isKerr) {
+                    const ringRadius = KERR_RING_RADIUS * lambdaValue; // Ring shrinks with Lambda
+                    cube.userData.kerrAngle += 0.03; // Rotation speed
+                    const angle = cube.userData.kerrAngle;
+                    // Calculate position on the ring (centered at origin, scaled by lambda)
+                    targetX = Math.cos(angle) * ringRadius;
+                    targetZ = Math.sin(angle) * ringRadius;
+                    targetY = cube.userData.baseY * lambdaValue; // Y position follows Lambda scaling
+                    // Add pulsing scale effect, also dampened by Lambda
+                    targetScale = (currentZoom >= 4.5 ? 1.05 : 1) * (1 + Math.sin(angle * 2 + now / 500) * 0.2 * lambdaValue);
+                    if (!heatmapActive) targetColor = 0xff0000; // Red (only if not in heatmap mode)
+                    targetOpacity = 0.7;
+                    isHandledByAppearanceMode = true; // Mark as handled
+                }
+
+                // D. Foam Mode (Adds noise, only if Smooth/Heatmap/Movement modes aren't active)
+                if (foamActive && !smoothActive && !heatmapActive && !isHandledByMovementMode) {
+                    const noise = Math.sin(now * 0.001 + cube.userData.gridX * 0.5 + cube.userData.gridZ * 0.3) * 0.1 * lambdaValue; // Noise dampened by lambda
+                    targetY += noise; // Add noise to Y position
+                    targetOpacity = 0.4; // More transparent in foam mode
+                }
+
+                // E. Non-Commutative Jitter (Adds jitter, only if Smooth/Heatmap/Movement modes aren't active)
+                if (isNonCom && !smoothActive && !heatmapActive && !isHandledByMovementMode) {
+                    const jitterAmount = 0.015 * lambdaValue; // Jitter dampened by lambda
+                    const deltaX = (Math.random() - 0.5) * jitterAmount;
+                    targetX += deltaX;
+                    targetZ += deltaX * 0.5; // Correlated jitter
+                    targetOpacity = 0.5; // Slightly more transparent
+                }
+
+                 // F. Special Case: Extreme Smoothness at very low Lambda (Overrides most things if smoothActive)
+                 if (smoothActive && lambdaValue < 0.1) {
+                    // Force into a highly ordered, shrunken state
+                    targetX = cube.userData.originalX * 0.1; // Fixed small position
+                    targetY = cube.userData.baseY * 0.1;
+                    targetZ = cube.userData.originalZ * 0.1;
+                    targetColor = 0x06b6d4; // Force Cyan color
+                    targetOpacity = 1.0; // Force fully opaque
+                    targetScale = 0.5; // Force small scale
+                    isHandledByAppearanceMode = true; // Ensure this state persists
+                }
+
+                // G. Heatmap Mode (Overrides ALL color and opacity, happens last if active)
+                if (heatmapActive) {
+                    // Calculate color based on suspicion level (Blue -> Red)
+                    const suspicionHue = 0.66 - (currentSuspicion / 100) * 0.66; // HSL Hue: 0.66 (Blue) to 0 (Red)
+                    targetColor = new THREE.Color().setHSL(suspicionHue, 0.8, 0.5).getHex();
+                    // Opacity increases with suspicion
+                    targetOpacity = 0.6 + (currentSuspicion / 100) * 0.3; // Range 0.6 to 0.9
+                    isHandledByAppearanceMode = true; // Ensure heatmap appearance overrides others
+                }
+
+                // --- Apply Final Calculated State to Cube ---
+                cube.position.set(targetX, targetY, targetZ);
+                cube.scale.set(targetScale, targetScale, targetScale);
+
+                // Update material properties only if they changed
+                if (cube.material.color.getHex() !== targetColor) {
+                    cube.material.color.setHex(targetColor);
+                }
+                if (cube.material.opacity !== targetOpacity) {
+                     cube.material.opacity = targetOpacity;
+                }
+                // Material needs update flag might be needed if certain props change (like wireframe externally)
+                // cube.material.needsUpdate = true; // Uncomment if visual glitches occur, but less performant
+            });
+
+            // Update UI elements
+            updateEfficiencyInfo(); // Update smoothness bar/text
+            // updateZoomInfo(); // Might be redundant here if only updated on zoom/mode change
+
+            // Render the scene
+            renderer.render(scene, camera);
+        }
+
 
         // Fügt die Kontroll-Buttons hinzu (inkl. Heatmap)
         function addGitterControlButtons() {
@@ -768,207 +853,281 @@
             const buttonRow = controlsContainer.querySelector('.flex-wrap');
             if (!buttonRow) return;
 
-            document.getElementById('toggle-grav')?.remove();
-            document.getElementById('toggle-chaos')?.remove();
+            // Clear any existing buttons first to avoid duplicates on potential re-init
+            buttonRow.innerHTML = '';
 
-            // Bestehende Buttons...
-            if (!document.getElementById('toggle-noncom')) {
-                const nonComButton = document.createElement('button');
-                nonComButton.id = 'toggle-noncom'; nonComButton.className = 'gitter-button bg-purple-600 hover:bg-purple-700'; nonComButton.textContent = 'Nicht-Kommutativität';
-                nonComButton.addEventListener('click', () => { isNonCom = !isNonCom; console.log("Nicht-Kommutativität:", isNonCom); updateZoomInfo(); updateSuspicionLevel(); });
-                buttonRow.appendChild(nonComButton);
-            }
-             if (!document.getElementById('add-mass')) {
-                const massButton = document.createElement('button');
-                massButton.id = 'add-mass'; massButton.className = 'gitter-button bg-green-600 hover:bg-green-700'; massButton.textContent = '"Masse" Hinzufügen';
-                massButton.addEventListener('click', () => {
+            const buttons = [
+                { id: 'toggle-noncom', text: 'Nicht-Kommutativität', color: 'bg-purple-600 hover:bg-purple-700', action: () => { isNonCom = !isNonCom; console.log("Nicht-Kommutativität:", isNonCom); updateZoomInfo(); updateSuspicionLevel(); } },
+                { id: 'add-mass', text: '"Masse" Hinzufügen', color: 'bg-green-600 hover:bg-green-700', action: () => {
                      console.log("Simuliere Masse hinzufügen...");
                      const center = Math.floor(GRID_SIZE / 2); const massEffectRadius = 3; const distortionStrength = -0.5;
                      if (!gridGroup) return;
                      gridGroup.children.forEach(cube => {
+                         if (!cube.userData) return;
                          const dx = cube.userData.gridX - center; const dy = cube.userData.gridY - center; const dz = cube.userData.gridZ - center;
                          const distance = Math.sqrt(dx*dx + dy*dy + dz*dz);
-                         if (distance < massEffectRadius) { const distortion = distortionStrength * Math.pow(1 - distance / massEffectRadius, 2); cube.userData.baseY = cube.userData.originalY + distortion; }
-                         else { cube.userData.baseY = cube.userData.originalY; }
-                          cube.material.needsUpdate = true;
+                         // Apply distortion based on distance, reset if outside radius
+                         if (distance < massEffectRadius) {
+                             const distortion = distortionStrength * Math.pow(1 - distance / massEffectRadius, 2);
+                             cube.userData.baseY = cube.userData.originalY + distortion;
+                         } else {
+                             cube.userData.baseY = cube.userData.originalY;
+                         }
                      });
+                     // Optionally update entropy visualization if needed
                      const exampleMass = parseFloat(document.getElementById('param-mass')?.value) || 1e15;
                      updateGridEntropy(center, center, center, exampleMass);
-                });
-                 buttonRow.appendChild(massButton);
-            }
-            if (!document.getElementById('toggle-ctc')) {
-                const ctcButton = document.createElement('button');
-                ctcButton.id = 'toggle-ctc'; ctcButton.className = 'gitter-button bg-yellow-600 hover:bg-yellow-700'; ctcButton.textContent = 'CTCs Umschalten';
-                ctcButton.addEventListener('click', () => { ctcActive = !ctcActive; console.log("CTCs:", ctcActive); updateZoomInfo(); updateSuspicionLevel(); });
-                buttonRow.appendChild(ctcButton);
-            }
-            if (!document.getElementById('toggle-kerr')) {
-                const kerrButton = document.createElement('button');
-                kerrButton.id = 'toggle-kerr'; kerrButton.className = 'gitter-button bg-red-600 hover:bg-red-700'; kerrButton.textContent = 'Kerr-Ring Umschalten';
-                kerrButton.addEventListener('click', () => { kerrActive = !kerrActive; console.log("Kerr:", kerrActive); updateZoomInfo(); updateSuspicionLevel(); });
-                buttonRow.appendChild(kerrButton);
-            }
-            if (!document.getElementById('toggle-foam')) {
-                const foamButton = document.createElement('button');
-                foamButton.id = 'toggle-foam'; foamButton.className = 'gitter-button bg-teal-600 hover:bg-teal-700'; foamButton.textContent = 'Schaum-Modus';
-                foamButton.addEventListener('click', () => { foamActive = !foamActive; console.log("Schaum:", foamActive); updateZoomInfo(); updateSuspicionLevel(); });
-                buttonRow.appendChild(foamButton);
-            }
-            if (!document.getElementById('toggle-smooth')) {
-                const smoothButton = document.createElement('button');
-                smoothButton.id = 'toggle-smooth'; smoothButton.className = 'gitter-button bg-cyan-600 hover:bg-cyan-700';
-                smoothButton.textContent = 'Glätte-Modus';
-                smoothButton.addEventListener('click', () => {
-                    smoothActive = !smoothActive; console.log("Glätte:", smoothActive); updateZoomInfo(); updateTorsionBoundaryVisibility(); updateSuspicionLevel();
-                    gridGroup?.children.forEach(cube => { cube.material.needsUpdate = true; });
-                });
-                buttonRow.appendChild(smoothButton);
-            }
-             // Heatmap Button
-             if (!document.getElementById('toggle-heatmap')) {
-                const heatmapButton = document.createElement('button');
-                heatmapButton.id = 'toggle-heatmap';
-                heatmapButton.className = 'gitter-button bg-gradient-to-r from-blue-500 via-purple-500 to-red-500 hover:from-blue-600 hover:via-purple-600 hover:to-red-600';
-                heatmapButton.textContent = 'Heatmap Modus';
-                heatmapButton.addEventListener('click', () => {
+                    }
+                },
+                { id: 'toggle-ctc', text: 'CTCs Umschalten', color: 'bg-yellow-600 hover:bg-yellow-700', action: () => { ctcActive = !ctcActive; console.log("CTCs:", ctcActive); updateZoomInfo(); updateSuspicionLevel(); } },
+                { id: 'toggle-kerr', text: 'Kerr-Ring Umschalten', color: 'bg-red-600 hover:bg-red-700', action: () => { kerrActive = !kerrActive; console.log("Kerr:", kerrActive); updateZoomInfo(); updateSuspicionLevel(); } },
+                { id: 'toggle-foam', text: 'Schaum-Modus', color: 'bg-teal-600 hover:bg-teal-700', action: () => { foamActive = !foamActive; console.log("Schaum:", foamActive); updateZoomInfo(); updateSuspicionLevel(); } },
+                { id: 'toggle-smooth', text: 'Glätte-Modus', color: 'bg-cyan-600 hover:bg-cyan-700', action: () => {
+                    smoothActive = !smoothActive;
+                    console.log("Glätte:", smoothActive);
+                    updateZoomInfo();
+                    updateTorsionBoundaryVisibility();
+                    updateSuspicionLevel();
+                    // Force material update if needed, e.g., to reset colors/opacity when toggling off
+                    gridGroup?.children.forEach(cube => { if(cube.material) cube.material.needsUpdate = true; });
+                    }
+                },
+                { id: 'toggle-heatmap', text: 'Heatmap Modus', color: 'bg-gradient-to-r from-blue-500 via-purple-500 to-red-500 hover:from-blue-600 hover:via-purple-600 hover:to-red-600', action: () => {
                     heatmapActive = !heatmapActive;
                     console.log("Heatmap aktiviert:", heatmapActive);
                     updateZoomInfo();
-                    updateSuspicionLevel(); // Trigger color update
-                });
-                buttonRow.appendChild(heatmapButton);
-            }
+                    updateSuspicionLevel(); // Trigger color update immediately
+                    // Ensure visual update if turning heatmap off
+                    if (!heatmapActive) {
+                        gridGroup?.children.forEach(cube => { if(cube.material) cube.material.needsUpdate = true; });
+                    }
+                  }
+                }
+            ];
+
+            buttons.forEach(btnInfo => {
+                const button = document.createElement('button');
+                button.id = btnInfo.id;
+                button.className = `gitter-button ${btnInfo.color}`;
+                button.textContent = btnInfo.text;
+                button.addEventListener('click', btnInfo.action);
+                buttonRow.appendChild(button);
+            });
         }
 
-
-        // Aktualisiert die Zoom-Info Anzeige (inkl. Heatmap)
+        // Aktualisiert die Zoom-Info Anzeige
         function updateZoomInfo() {
             const zoomInfo = document.getElementById('zoom-info');
             if (zoomInfo) {
                 let modes = [];
-                if (heatmapActive) modes.push('Heatmap');
-                else if (smoothActive) modes.push('Glätte');
-                else {
+                // Determine primary mode display (Heatmap > Smooth > others)
+                if (heatmapActive) {
+                    modes.push('Heatmap');
+                } else if (smoothActive) {
+                    modes.push('Glätte');
+                    if (currentZoom >= 4.0) modes.push('Torsions-Grenze'); // Show torsion only in smooth mode near zoom limit
+                } else {
+                    // Add other modes only if not Heatmap or Smooth
                     if (isNonCom) modes.push('Nicht-Kommutativ');
                     if (foamActive) modes.push('Schaum');
                 }
+
+                // Add independent modes
                 if (ctcActive) modes.push('CTCs');
                 if (kerrActive) modes.push('Kerr-Ring');
-                if (smoothActive && currentZoom >= 4.0) modes.push('Torsions-Grenze');
+
+                // Add special zoom state
                 if (currentZoom >= 4.5) modes.push('Planck-Ansicht');
+
+                // Always add Lambda value
                 modes.push(`Λ(t)=${lambdaValue.toFixed(2)}`);
-                zoomInfo.textContent = `Zoom: ${currentZoom.toFixed(1)}x | Modus: ${modes.length > 0 ? modes.join(', ') : 'Standard'}`;
+
+                // Construct the final string
+                const modeString = modes.length > 0 ? modes.join(', ') : 'Standard';
+                zoomInfo.textContent = `Zoom: ${currentZoom.toFixed(1)}x | Modus: ${modeString}`;
             }
         }
 
-        // Zeigt/Versteckt die Torsionsgrenze
+        // Zeigt/Versteckt die Torsionsgrenze (wireframe sphere)
         function updateTorsionBoundaryVisibility() {
-             const existingBoundary = scene?.getObjectByName('torsionBoundary');
-             if (smoothActive && currentZoom >= 4.0) {
-                 if (!existingBoundary && scene) {
-                     const boundaryGeometry = new THREE.SphereGeometry(1.5, 16, 16);
-                     const boundaryMaterial = new THREE.MeshBasicMaterial({ color: 0xffa500, wireframe: true, opacity: 0.4, transparent: true, depthWrite: false });
-                     torsionBoundarySphere = new THREE.Mesh(boundaryGeometry, boundaryMaterial);
-                     torsionBoundarySphere.name = 'torsionBoundary';
-                     torsionBoundarySphere.position.set(0, 0, 0);
-                     scene.add(torsionBoundarySphere);
-                 }
-             } else {
-                 if (existingBoundary && scene) {
-                     scene.remove(existingBoundary);
-                     torsionBoundarySphere = null;
-                 }
+             const boundaryName = 'torsionBoundary';
+             const existingBoundary = scene?.getObjectByName(boundaryName);
+
+             // Show boundary only if: Smooth mode is active AND zoom is high enough
+             const shouldShow = smoothActive && currentZoom >= 4.0;
+
+             if (shouldShow && !existingBoundary && scene) {
+                 // Create and add the sphere
+                 const boundaryGeometry = new THREE.SphereGeometry(1.5, 16, 16); // Adjust size as needed
+                 const boundaryMaterial = new THREE.MeshBasicMaterial({
+                     color: 0xffa500, // Orange
+                     wireframe: true,
+                     opacity: 0.4,
+                     transparent: true,
+                     depthWrite: false // Render on top
+                 });
+                 torsionBoundarySphere = new THREE.Mesh(boundaryGeometry, boundaryMaterial);
+                 torsionBoundarySphere.name = boundaryName;
+                 torsionBoundarySphere.position.set(0, 0, 0); // Center it
+                 scene.add(torsionBoundarySphere);
+                 console.log("Torsion boundary added.");
+             } else if (!shouldShow && existingBoundary && scene) {
+                 // Remove the sphere
+                 scene.remove(existingBoundary);
+                 if (torsionBoundarySphere && torsionBoundarySphere.geometry) torsionBoundarySphere.geometry.dispose();
+                 if (torsionBoundarySphere && torsionBoundarySphere.material) torsionBoundarySphere.material.dispose();
+                 torsionBoundarySphere = null;
+                 console.log("Torsion boundary removed.");
              }
         }
 
-        // Helper function to get current suspicion value
+        // Helper function to get current suspicion value based on modes and lambda
         function calculateCurrentSuspicion() {
-             const lambdaSuspicion = (1 - lambdaValue) * 50;
-             const smoothBonus = smoothActive ? 30 : 0;
+             // Base suspicion from low Lambda (more optimization)
+             const lambdaSuspicion = (1 - lambdaValue) * 50; // Max 50 points from Lambda=0
+
+             // Bonus for active "optimization" modes
+             const smoothBonus = smoothActive ? 30 : 0; // Significant bonus for explicit smoothing
+
+             // Bonus for "exotic" or computationally complex features being active
              let exoticBonus = 0;
-             if (isNonCom || foamActive) exoticBonus += 10;
-             if (ctcActive || kerrActive) exoticBonus += 20;
-             return Math.min(100, lambdaSuspicion + smoothBonus + exoticBonus);
+             if (isNonCom || foamActive) exoticBonus += 5; // Small bonus for subtle effects
+             if (ctcActive || kerrActive) exoticBonus += 15; // Larger bonus for complex dynamics
+
+             // Combine and cap at 100%
+             return Math.min(100, Math.max(0, lambdaSuspicion + smoothBonus + exoticBonus));
         }
 
-        // Updates heatmap colors based on suspicion
+        // Updates heatmap colors based on suspicion percentage
         function updateHeatmapColors(suspicionPercentage) {
-             if (!gridGroup || !heatmapActive) return; // Nur im Heatmap-Modus
-             const suspicionHue = 0.66 - (suspicionPercentage / 100) * 0.66; // Blau (0.66) zu Rot (0)
+             // Only run if heatmap mode is active and grid exists
+             if (!gridGroup || !heatmapActive) return;
+
+             // Calculate HSL hue: 0.66 (Blue) down to 0 (Red) as suspicion increases
+             const suspicionHue = 0.66 - (suspicionPercentage / 100) * 0.66;
+             // Calculate opacity: 0.6 up to 0.9 as suspicion increases
+             const suspicionOpacity = 0.6 + (suspicionPercentage / 100) * 0.3;
+
              gridGroup.children.forEach(cube => {
-                 // Überschreibe Farbe für Heatmap
-                 cube.material.color.setHSL(suspicionHue, 0.8, 0.5);
-                 // Setze Opazität für Heatmap
-                 cube.material.opacity = 0.6 + (suspicionPercentage / 100) * 0.3; // 0.6 bis 0.9
-                 cube.material.needsUpdate = true;
+                 if (cube.material && typeof cube.material.color?.setHSL === 'function') {
+                     // Apply heatmap color and opacity
+                     cube.material.color.setHSL(suspicionHue, 0.8, 0.5); // Saturation 0.8, Lightness 0.5
+                     cube.material.opacity = suspicionOpacity;
+                     // cube.material.needsUpdate = true; // May not be needed if only color/opacity change
+                 }
              });
         }
 
-
         // Funktion zur Aktualisierung der Gitter-Entropie/Farbe (wird NICHT im Heatmap-Modus verwendet)
+        // Note: This function primarily sets cube.userData.entropy. Color setting is secondary
+        // and overridden by modes like Smooth, Heatmap, CTC, Kerr.
         function updateGridEntropy(centerX, centerY, centerZ, mass) {
-            if (heatmapActive) return; // Heatmap überschreibt Entropie-Farbe
-
-            const maxRadius = 5;
-            const spin = parseFloat(document.getElementById('param-spin')?.value) || 0;
-            const maxEntropy = calculateKerrEntropy(mass, spin);
-            const entropyScaleFactor = maxEntropy > 0 ? 1 / (maxEntropy * 0.8 + 1e-20) : 1;
             if (!gridGroup) return;
 
+            const maxRadius = 5; // Radius of influence for entropy calculation
+            const spin = parseFloat(document.getElementById('param-spin')?.value) || 0;
+            const maxEntropy = calculateKerrEntropy(mass, spin); // Use Kerr as it includes Bekenstein (spin=0)
+            // Avoid division by zero if maxEntropy is 0
+            const entropyScaleFactor = maxEntropy > 1e-20 ? 1 / (maxEntropy * 0.8 + 1e-20) : 1;
+
             gridGroup.children.forEach(cube => {
-                const dx = cube.userData.gridX - centerX; const dy = cube.userData.gridY - centerY; const dz = cube.userData.gridZ - centerZ;
+                if (!cube.userData || !cube.material) return;
+
+                const dx = cube.userData.gridX - centerX;
+                const dy = cube.userData.gridY - centerY;
+                const dz = cube.userData.gridZ - centerZ;
                 const distance = Math.sqrt(dx*dx + dy*dy + dz*dz);
+
+                // Calculate base entropy based on distance
                 let entropy = 0;
-                if (distance < maxRadius) { entropy = Math.max(0, maxEntropy * (1 - distance / maxRadius)); }
-
-                // Entropie mit Lambda(t) skalieren
-                entropy *= lambdaValue;
-
-                // Entropie dämpfen, wenn Glätte aktiv ist (basierend auf Lambda)
-                if (smoothActive) {
-                    const smoothnessFactor = Math.max(0, Math.min(1, (lambdaValue - 0.6) * 2.5)); // 0 bis 1
-                    entropy *= (1 - smoothnessFactor * 0.999); // Dämpfung stark bei hohem Lambda (>0.6)
+                if (distance < maxRadius) {
+                    entropy = Math.max(0, maxEntropy * (1 - distance / maxRadius));
                 }
 
-                cube.userData.entropy = entropy;
-                const normalizedEntropy = Math.min(1, Math.max(0, entropy * entropyScaleFactor));
-                const hue = 0.66 - (normalizedEntropy * 0.66); // Blau -> Rot
+                // Scale entropy with Lambda(t) - lower lambda, lower entropy 'signal'
+                entropy *= lambdaValue;
 
-                if (cube.material && typeof cube.material.color?.setHSL === 'function') {
-                    // Farbe nur ändern, wenn KEIN spezieller Modus (CTC/Kerr/Smooth) aktiv ist
-                    if (!((ctcActive && cube.userData.isCTC) || (kerrActive && cube.userData.isKerr) || smoothActive)) {
+                // Dampen entropy if Smooth mode is active (representing optimization)
+                if (smoothActive) {
+                     const baseSmoothness = 0.8;
+                     const smoothnessFactor = baseSmoothness + (1.0 - baseSmoothness) * (1.0 - lambdaValue);
+                    // Reduce entropy signal significantly as smoothness approaches 100%
+                    entropy *= (1 - smoothnessFactor * 0.95); // Dampens up to 95% at max smoothness
+                }
+
+                // Store the calculated entropy value
+                cube.userData.entropy = Math.max(0, entropy); // Ensure non-negative
+
+                // --- Visual Update (ONLY if NOT overridden by other modes) ---
+                // Check if color should be updated based on entropy (i.e., no overriding mode active)
+                const isOverridden = heatmapActive || smoothActive || (ctcActive && cube.userData.isCTC) || (kerrActive && cube.userData.isKerr);
+
+                if (!isOverridden) {
+                    // Calculate color based on normalized entropy (Blue -> Red)
+                    const normalizedEntropy = Math.min(1, Math.max(0, cube.userData.entropy * entropyScaleFactor));
+                    const hue = 0.66 - (normalizedEntropy * 0.66); // HSL Hue: 0.66 (Blue) to 0 (Red)
+
+                    if (typeof cube.material.color?.setHSL === 'function') {
                         cube.material.color.setHSL(hue, 0.8, 0.5);
-                        cube.material.needsUpdate = true;
+                        // Opacity could also be linked to entropy here if desired
+                        // cube.material.opacity = 0.6 + normalizedEntropy * 0.3; // Example: 0.6 to 0.9
+                        // cube.material.needsUpdate = true; // Might need if changing more than color/opacity
                     }
-                } else { console.warn("Material oder Farbe nicht gefunden für Cube:", cube); }
+                }
+                // If overridden, the color/opacity will be set by the active mode in the animate() loop
             });
-            // console.log(`Gitter-Entropie aktualisiert für Masse: ${mass.toExponential(2)} kg`);
+            // console.log(`Gitter-Entropie aktualisiert für Masse: ${mass.toExponential(2)} kg, Max Ent.: ${maxEntropy.toExponential(2)}`);
         }
 
-        // Kerr Entropie Berechnung
+
+        // Kerr / Bekenstein-Hawking Entropie Berechnung (Helper)
         function calculateKerrEntropy(mass, spin) {
+             // Ensure valid inputs
              if (mass <= 0 || spin < 0 || spin > 1) return 0;
+
+             // Use standard physics constants
              const M = mass;
-             const a = spin * G * M / c;
-             const r_plus_sq_term = Math.max(0, (G**2 * M**2 / c**4) - (a**2 / c**2));
-             const r_plus = (G * M / (c**2)) + Math.sqrt(r_plus_sq_term);
-             const area = 4 * Math.PI * (r_plus**2 + (a / c)**2);
+             // Angular momentum per unit mass: a = J/M. Max spin corresponds to a = GM/c
+             // Here 'spin' parameter is dimensionless a / (GM/c), ranging 0 to 1.
+             const a_param = spin * G * M / c; // Physical angular momentum per unit mass
+
+             // Calculate terms for event horizon radius (r+)
+             // Ensure term under square root is non-negative (relevant for extreme Kerr a > GM/c, though input spin <= 1 prevents this)
+             const r_term_sq = Math.max(0, (G**2 * M**2 / c**4) - (a_param**2 / c**2));
+             const r_plus = (G * M / (c**2)) + Math.sqrt(r_term_sq);
+
+             // Calculate area of the event horizon for Kerr black hole
+             // Area = 4 * pi * (r+^2 + a^2) where a = J / (Mc) = a_param / c
+             const area = 4 * Math.PI * (r_plus**2 + (a_param / c)**2);
+
+             // Calculate Bekenstein-Hawking entropy: S = (kc^3 * A) / (4 * hbar * G) where k=1 (Boltzmann constant absorbed or set to 1)
              const entropy = (c**3 * area) / (4 * G * hbar);
+
+             // For spin = 0 (Schwarzschild), a_param = 0, r_plus = 2GM/c^2 (Schwarzschild radius), Area = 4*pi*r_s^2
+             // Formula correctly reduces to Bekenstein-Hawking for Schwarzschild.
+
              return entropy;
         }
 
-        // Aktualisiert die Effizienz-Anzeige (jetzt als Bar und "Glättung")
+        // *** UPDATED updateEfficiencyInfo with Baseline Smoothing ***
         function updateEfficiencyInfo() {
             const efficiencyDiv = document.getElementById('efficiency-info');
             if (!efficiencyDiv) return;
-            const smoothnessPercentage = (1 - lambdaValue) * 100; // Niedrigeres Lambda = Höhere Glättung/Effizienz
-            let infoText = `Glättung: ${smoothnessPercentage.toFixed(0)}%`; // Text geändert
-            if (smoothActive) infoText += ' (Aktiv)'; // Zeigt an, ob Glättungsmodus an ist
-            // Erstelle Bar HTML
+
+            // *** Baseline Smoothing Calculation ***
+            const baseSmoothness = 0.8; // Baseline: 80% Glättung bei Lambda=0.75 (represents current universe state)
+            // Calculate current smoothness factor based on Lambda
+            const smoothnessFactor = baseSmoothness + (1.0 - baseSmoothness) * (1.0 - lambdaValue);
+            const smoothnessPercentage = Math.min(100, Math.max(0, smoothnessFactor * 100)); // Clamp 0-100
+
+            // Update text
+            let infoText = `Glättung: ${smoothnessPercentage.toFixed(0)}%`;
+            if (smoothActive) infoText += ' (Aktiv)'; // Indicate if smooth mode is manually activated
+
+            // Update HTML for the bar and text
             efficiencyDiv.innerHTML = `
                 <div class="w-16 h-2 bg-gray-700 rounded overflow-hidden mr-2">
-                    <div class="h-full bg-cyan-500 rounded" style="width: ${smoothnessPercentage}%"></div>
+                    <div class="h-full bg-gradient-to-r from-cyan-500 to-red-500 rounded" style="width: ${smoothnessPercentage}%"></div>
                 </div>
                 <span>${infoText}</span>
             `;
@@ -978,147 +1137,161 @@
         // --- Event Listener Setup ---
         function setupEventListeners() {
             const listElement = document.getElementById('evidence-list');
+            // Use event delegation for evidence card clicks
             listElement?.addEventListener('click', (event) => {
                 const card = event.target.closest('.evidence-card');
-                if (card && card.dataset.id) { displayEvidenceDetail(card.dataset.id); }
+                if (card && card.dataset.id) {
+                    displayEvidenceDetail(card.dataset.id);
+                }
             });
 
+            // Filters
             document.getElementById('category-filter')?.addEventListener('change', populateEvidenceList);
             document.getElementById('search-evidence')?.addEventListener('input', populateEvidenceList);
 
-            // Gitter-Modus Buttons werden in addGitterControlButtons hinzugefügt und bekommen dort Listener
+            // Gitter control buttons are added dynamically with listeners in addGitterControlButtons()
 
-            document.getElementById('add-mass')?.addEventListener('click', () => {
-                 console.log("Simuliere Masse hinzufügen...");
-                 const center = Math.floor(GRID_SIZE / 2); const massEffectRadius = 3; const distortionStrength = -0.5;
-                 if (!gridGroup) return;
-                 gridGroup.children.forEach(cube => {
-                     const dx = cube.userData.gridX - center; const dy = cube.userData.gridY - center; const dz = cube.userData.gridZ - center;
-                     const distance = Math.sqrt(dx*dx + dy*dy + dz*dz);
-                     if (distance < massEffectRadius) {
-                         const distortion = distortionStrength * Math.pow(1 - distance / massEffectRadius, 2);
-                         cube.userData.baseY = cube.userData.originalY + distortion;
-                     } else {
-                         cube.userData.baseY = cube.userData.originalY;
-                     }
-                      cube.material.needsUpdate = true;
-                 });
-                 const exampleMass = parseFloat(document.getElementById('param-mass')?.value) || 1e15;
-                 updateGridEntropy(center, center, center, exampleMass);
-            });
-
-             document.getElementById('apply-code-params')?.addEventListener('click', () => {
-                 const massInput = document.getElementById('param-mass'); const spinInput = document.getElementById('param-spin');
+            // Code parameter application
+            document.getElementById('apply-code-params')?.addEventListener('click', () => {
+                 const massInput = document.getElementById('param-mass');
+                 const spinInput = document.getElementById('param-spin');
                  const outputElement = document.getElementById('code-output');
-                 const massValue = parseFloat(massInput?.value) || 0; const spinValue = parseFloat(spinInput?.value) || 0;
+                 const massValue = parseFloat(massInput?.value) || 0;
+                 const spinValue = parseFloat(spinInput?.value); // Allow 0
 
                  if (outputElement && massValue > 0 && spinValue >= 0 && spinValue <= 1) {
                     const entropy = calculateKerrEntropy(massValue, spinValue);
-                    outputElement.textContent = `Berechnete Kerr-Entropie für Masse ${massValue.toExponential(2)} kg, Spin ${spinValue}: ${entropy.toExponential(2)}`;
+                    outputElement.textContent = `Berechnete Kerr-Entropie für Masse ${massValue.toExponential(2)} kg, Spin ${spinValue.toFixed(1)}: ${entropy.toExponential(2)}`;
+                    // Update grid entropy visualization
                     const center = Math.floor(GRID_SIZE / 2);
                     updateGridEntropy(center, center, center, massValue);
-                 } else if (outputElement) { outputElement.textContent = "Bitte gültige Werte für Masse (>0) und Spin (0-1) eingeben."; }
+                 } else if (outputElement) {
+                     outputElement.textContent = "Fehler: Bitte gültige Masse (>0 kg) und Spin (0 bis 1) eingeben.";
+                 }
              });
 
-             // Event Listener für Torsions-Tests
+             // Torsion/Equivalence Test Buttons
              document.getElementById('test-inv-square')?.addEventListener('click', () => {
                  const outputElement = document.getElementById('torsion-output');
                  if (outputElement) {
-                     const m1 = 1e-3; const m2 = 1e-3; const dist = 30e-6;
-                     const force = (G * m1 * m2) / (dist * dist); const threshold = 1e-14;
+                     const m1 = 1e-3; // kg
+                     const m2 = 1e-3; // kg
+                     const dist = 30e-6; // 30 micrometers
+                     const force = (G * m1 * m2) / (dist * dist);
+                     const threshold = 1e-14; // Approx sensitivity limit for force diff
                      outputElement.textContent = force < threshold ?
-                         `Test 1/r² bei ${dist.toExponential(1)} m: Kraft ≈ ${force.toExponential(2)} N (unterhalb Messgrenze ${threshold.toExponential(1)} N, keine Abweichung nachweisbar)` :
-                         `Test 1/r² bei ${dist.toExponential(1)} m: Kraft ≈ ${force.toExponential(2)} N (über Messgrenze, keine Abweichung gefunden)`;
+                         `Test 1/r² bei ${dist.toExponential(1)} m: Kraft ≈ ${force.toExponential(2)} N (unterhalb der typ. Messgrenze für Abweichungen [${threshold.toExponential(1)} N])` :
+                         `Test 1/r² bei ${dist.toExponential(1)} m: Kraft ≈ ${force.toExponential(2)} N (innerhalb des Bereichs, in dem Torsionswaagen keine Abweichung vom 1/r²-Gesetz finden)`;
                  }
              });
              document.getElementById('test-equiv')?.addEventListener('click', () => {
                  const outputElement = document.getElementById('torsion-output');
                   if (outputElement) {
-                      const m_grav = 1.0; const m_inertia = 1.0;
-                      const ratio = m_grav / m_inertia; const deviation = Math.abs(1 - ratio); const precision = 1e-12;
+                      const m_grav = 1.0; // Assume perfect match for demo
+                      const m_inertia = 1.0;
+                      const ratio = m_grav / m_inertia;
+                      const deviation = Math.abs(1 - ratio);
+                      const precision = 1e-12; // Experimental precision level
                       outputElement.textContent = deviation < precision ?
-                         `Test Äquivalenzprinzip: Verhältnis m_grav/m_inertia ≈ ${ratio.toFixed(14)}, Abweichung ${deviation.toExponential(1)} < ${precision.toExponential(1)} (Bestätigt)`:
-                         `Test Äquivalenzprinzip: Verhältnis m_grav/m_inertia ≈ ${ratio.toFixed(14)}, Abweichung ${deviation.toExponential(1)} > ${precision.toExponential(1)} (Widerspricht Experimenten!)`;
+                         `Test Äquivalenzprinzip: Verhältnis m_g/m_i ≈ ${ratio.toFixed(14)}. Abweichung ${deviation.toExponential(1)} < ${precision.toExponential(1)} (Bestätigt innerhalb der Messgenauigkeit)`:
+                         `Test Äquivalenzprinzip: Verhältnis m_g/m_i ≈ ${ratio.toFixed(14)}. Abweichung ${deviation.toExponential(1)} > ${precision.toExponential(1)} (Widerspricht Experimenten!)`;
                   }
              });
 
-             // Event Listener für Glätte-Test Button
+             // Code Test Buttons (Smoothness, Lambda)
              document.getElementById('test-smooth')?.addEventListener('click', () => {
                  const outputElement = document.getElementById('torsion-output');
                  if (outputElement) {
-                     const x = Math.floor(GRID_SIZE / 2); const y = Math.floor(GRID_SIZE / 2);
-                     const initial = Math.random() * 1e-34;
+                     const x = Math.floor(GRID_SIZE / 2), y = Math.floor(GRID_SIZE / 2); // Example coords
+                     const initial = Math.random() * 1e-34; // Simulate near-Planck noise
+                     // Simulate rounding to Planck length
                      const optimized = Math.round(initial / PLANCK_LENGTH) * PLANCK_LENGTH;
-                     outputElement.textContent = `Glätte-Optimierung an (${x}, ${y}): Zustand von ${initial.toExponential(2)} zu ${optimized.toExponential(2)} (Rauschen entfernt, simuliert Effizienz)`;
+                     outputElement.textContent = `Glätte-Optimierung bei (${x}, ${y}): Zustand von ${initial.toExponential(2)} zu ${optimized.toExponential(2)} (Simuliert Rauschunterdrückung nahe Planck-Skala)`;
+                 }
+             });
+              document.getElementById('test-lambda')?.addEventListener('click', () => {
+                 const outputElement = document.getElementById('torsion-output');
+                 if (outputElement) {
+                     const lambda_t = lambdaValue;
+                     const old_lambda = 0.75; // Assuming 'current' value for comparison
+                     const expansion_rate = c * lambda_t; // Simplified expansion effect
+                     const smoothness_factor = 1 - lambda_t; // Higher value means more smoothness/optimization
+                     outputElement.textContent = `Dynamisches Λ(t): Wert von ${old_lambda.toFixed(2)} (Referenz) zu ${lambda_t.toFixed(2)}. Expansion ≈ ${expansion_rate.toExponential(2)} m/s. Optimierungsfaktor (1-Λ): ${smoothness_factor.toFixed(2)}`;
                  }
              });
 
-             // Event Listener für Lambda-Slider
+
+             // Lambda Slider Input
              const lambdaSlider = document.getElementById('lambda-slider');
              lambdaSlider?.addEventListener('input', (e) => {
+                 // Stop runback if user manually changes slider
                  if (lambdaIntervalId) {
                      clearInterval(lambdaIntervalId); lambdaIntervalId = null;
                      const runbackBtn = document.getElementById('lambda-runback');
                      if(runbackBtn) { runbackBtn.textContent = 'Starte Λ(t) Rücklauf'; runbackBtn.disabled = false; }
-                     lambdaSlider.disabled = false;
+                     const scoreArea = document.getElementById('score-area');
+                     if(scoreArea) scoreArea.style.backgroundColor = ''; // Reset background
                  }
+                 // Update value and UI elements
                  lambdaValue = parseFloat(e.target.value);
                  const lambdaValueDisplay = document.getElementById('lambda-value');
                  if(lambdaValueDisplay) lambdaValueDisplay.textContent = lambdaValue.toFixed(2);
-                 updateZoomInfo();
+                 updateZoomInfo(); // Update mode display with new Lambda
+                 // Update grid entropy visualization based on new lambda
                  const center = Math.floor(GRID_SIZE / 2);
                  const mass = parseFloat(document.getElementById('param-mass')?.value) || 1e15;
                  updateGridEntropy(center, center, center, mass);
+                 // Recalculate scores and levels
                  updateTotalScore();
                  updateSuspicionLevel();
+                 // Slider itself should remain enabled
+                 lambdaSlider.disabled = false;
              });
 
-             // Event Listener für Lambda-Test Button
-             document.getElementById('test-lambda')?.addEventListener('click', () => {
-                 const outputElement = document.getElementById('torsion-output');
-                 if (outputElement) {
-                     const lambda_t = lambdaValue;
-                     const old_lambda = 1.0; // Fester Startwert für Demo
-                     const expansion_rate = c * lambda_t; // Vereinfacht
-                     const smoothness_factor = 1 - lambda_t; // NEU
-                     outputElement.textContent = `Λ(t)-Hotfix: Dunkle Energie von ${old_lambda.toFixed(2)} zu ${lambda_t.toFixed(2)}, Expansion ≈ ${expansion_rate.toExponential(2)} m/s, Optimierungsfaktor (1-Λ): ${smoothness_factor.toFixed(2)}`;
-                 }
-             });
-
-             // Event Listener für Lambda Rücklauf Button
+             // Lambda Runback Button
              document.getElementById('lambda-runback')?.addEventListener('click', (e) => {
                  const button = e.target;
                  const slider = document.getElementById('lambda-slider');
                  const scoreArea = document.getElementById('score-area');
                  if (!slider || !button) return;
 
-                 if (lambdaIntervalId) { // Stoppe den Rücklauf
+                 if (lambdaIntervalId) { // Stop the current runback
                      clearInterval(lambdaIntervalId); lambdaIntervalId = null;
-                     button.textContent = 'Starte Λ(t) Rücklauf'; button.disabled = false; slider.disabled = false;
-                     if(scoreArea) scoreArea.style.backgroundColor = ''; // Reset background
-                     console.log("Lambda runback stopped.");
-                 } else { // Starte den Rücklauf
-                     button.textContent = 'Stoppe Rücklauf'; button.disabled = true; slider.disabled = true;
+                     button.textContent = 'Starte Λ(t) Rücklauf';
+                     button.disabled = false; // Re-enable button
+                     slider.disabled = false; // Re-enable slider
+                     if(scoreArea) scoreArea.style.backgroundColor = ''; // Reset background color
+                     console.log("Lambda runback stopped manually.");
+                 } else { // Start a new runback
+                     button.textContent = 'Stoppe Rücklauf';
+                     button.disabled = false; // Keep button enabled to allow stopping
+                     slider.disabled = true; // Disable slider during runback
                      console.log("Lambda runback started.");
                      lambdaIntervalId = setInterval(() => {
-                         lambdaValue -= 0.01;
+                         lambdaValue -= 0.005; // Slower step for smoother transition
                          if (lambdaValue < 0) {
-                             lambdaValue = 0; clearInterval(lambdaIntervalId); lambdaIntervalId = null;
-                             button.textContent = 'Starte Λ(t) Rücklauf'; button.disabled = false; slider.disabled = false;
-                             if(scoreArea) scoreArea.style.backgroundColor = ''; // Reset background at end
+                             lambdaValue = 0;
+                             clearInterval(lambdaIntervalId); lambdaIntervalId = null;
+                             button.textContent = 'Starte Λ(t) Rücklauf';
+                             button.disabled = false; // Re-enable button at end
+                             slider.disabled = false; // Re-enable slider at end
+                             if(scoreArea) scoreArea.style.backgroundColor = ''; // Reset background color at end
                              console.log("Lambda runback finished.");
                          }
-                         // Update UI synchron zum Intervall
+                         // Update UI synchronously within the interval
                          slider.value = lambdaValue;
                          const lambdaValueDisplay = document.getElementById('lambda-value');
                          if(lambdaValueDisplay) lambdaValueDisplay.textContent = lambdaValue.toFixed(2);
                          updateZoomInfo();
+                         // Update grid entropy visualization
                          const center = Math.floor(GRID_SIZE / 2);
                          const mass = parseFloat(document.getElementById('param-mass')?.value) || 1e15;
                          updateGridEntropy(center, center, center, mass);
-                         updateTotalScore(); // Update score & background color
+                         // Recalculate scores and levels (will also handle scoreArea background)
+                         updateTotalScore();
                          updateSuspicionLevel();
-                     }, 100); // Intervallzeit (ms)
+
+                     }, 50); // Interval time (ms) - adjusted for smoother step
                  }
              });
         }
@@ -1128,55 +1301,50 @@
              const container = document.getElementById('test-buttons-container');
              if (!container) return;
 
-             document.getElementById('test-chaos')?.remove();
+             // Clear existing buttons in case of re-init
+             // Keep the non-dynamically added buttons (Test 1/r², Test Äquivalenz)
+             const dynamicButtons = container.querySelectorAll('#test-smooth, #test-lambda');
+             dynamicButtons.forEach(btn => btn.remove());
 
-             if (!document.getElementById('test-smooth')) {
-                 const smoothTestButton = document.createElement('button');
-                 smoothTestButton.id = 'test-smooth';
-                 smoothTestButton.className = 'text-xs bg-cyan-600 hover:bg-cyan-700 text-white py-1 px-3 rounded';
-                 smoothTestButton.textContent = 'Test Glätte';
-                 container.appendChild(smoothTestButton);
-             }
-             if (!document.getElementById('test-lambda')) {
-                 const lambdaTestButton = document.createElement('button');
-                 lambdaTestButton.id = 'test-lambda';
-                 lambdaTestButton.className = 'text-xs bg-purple-600 hover:bg-purple-700 text-white py-1 px-3 rounded';
-                 lambdaTestButton.textContent = 'Test Λ(t)';
-                 container.appendChild(lambdaTestButton);
-             }
+             // Add Smooth Test Button
+             const smoothTestButton = document.createElement('button');
+             smoothTestButton.id = 'test-smooth';
+             smoothTestButton.className = 'text-xs bg-cyan-600 hover:bg-cyan-700 text-white py-1 px-3 rounded';
+             smoothTestButton.textContent = 'Test Glätte';
+             container.appendChild(smoothTestButton);
+
+             // Add Lambda Test Button
+             const lambdaTestButton = document.createElement('button');
+             lambdaTestButton.id = 'test-lambda';
+             lambdaTestButton.className = 'text-xs bg-purple-600 hover:bg-purple-700 text-white py-1 px-3 rounded';
+             lambdaTestButton.textContent = 'Test Λ(t)';
+             container.appendChild(lambdaTestButton);
+
+             // Re-attach event listeners for these specific buttons (if not handled by delegation)
+             // Note: Listeners are attached in setupEventListeners() based on IDs, so this should be fine.
         }
 
-         // Wendet den Lambda-Effekt auf das Gitter an
+         // *** UPDATED updateLambdaEffect Function ***
          function updateLambdaEffect() {
              if (!gridGroup) return;
-             const expansionFactor = lambdaValue;
+             const expansionFactor = Math.max(0.01, lambdaValue); // Prevent shrinking to zero, minimum scale 0.01
 
              gridGroup.children.forEach(cube => {
-                 // Skaliere Position relativ zum Zentrum
-                 // Diese Position wird die Basis für andere Effekte im animate() Loop
+                 if (!cube.userData) return;
+                 // Scale position relative to the origin based on lambda
                  const targetX = cube.userData.originalX * expansionFactor;
-                 const targetY = cube.userData.baseY * expansionFactor; // Skaliere auch baseY
+                 // Also scale the baseY offset (used by mass effect) by lambda
+                 const targetY = cube.userData.baseY * expansionFactor;
                  const targetZ = cube.userData.originalZ * expansionFactor;
-                 // Setze die Position direkt hier, damit animate() darauf aufbauen kann
+                 // Set the position directly. The animate() function will read this
+                 // position and potentially modify it further based on active modes (CTC, Kerr, Foam, etc.).
                  cube.position.set(targetX, targetY, targetZ);
              });
+
+             // No need to update efficiency info here, animate() handles it.
+             // No need to render here, animate() handles it.
          }
 
-         // Aktualisiert die Effizienz-Anzeige (jetzt als Bar und "Glättung")
-         function updateEfficiencyInfo() {
-            const efficiencyDiv = document.getElementById('efficiency-info');
-            if (!efficiencyDiv) return;
-            const smoothnessPercentage = (1 - lambdaValue) * 100; // Niedrigeres Lambda = Höhere Glättung/Effizienz
-            let infoText = `Glättung: ${smoothnessPercentage.toFixed(0)}%`; // Text geändert
-            if (smoothActive) infoText += ' (Aktiv)'; // Zeigt an, ob Glättungsmodus an ist
-            // Erstelle Bar HTML
-            efficiencyDiv.innerHTML = `
-                <div class="w-16 h-2 bg-gray-700 rounded overflow-hidden mr-2">
-                    <div class="h-full bg-cyan-500 rounded" style="width: ${smoothnessPercentage}%"></div>
-                </div>
-                <span>${infoText}</span>
-            `;
-        }
 
     </script>
 
