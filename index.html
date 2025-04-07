@@ -52,9 +52,13 @@
             overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;
         }
         #gittermodell-container {
-            min-height: 400px; background-color: #111827;
+            /* Angepasste Höhe für breiteres Layout */
+            min-height: 450px;
+            height: 60vh; /* Nimmt mehr vertikalen Raum ein */
+            background-color: #111827;
             border-radius: 0.5rem; border: 1px solid #374151;
             position: relative; overflow: hidden; cursor: grab;
+            width: 100%; /* Nimmt volle Breite im neuen Layout */
         }
         #gittermodell-container:active { cursor: grabbing; }
         #zoom-info, #efficiency-info {
@@ -64,7 +68,7 @@
             z-index: 10; pointer-events: none;
         }
         #zoom-info { bottom: 10px; left: 10px; }
-        #efficiency-info { /* Styling für Glättungs-Anzeige mit Bar */
+        #efficiency-info {
             top: 10px; right: 10px;
             display: flex; align-items: center; gap: 8px;
         }
@@ -89,6 +93,12 @@
          }
          #score-area {
              transition: background-color 0.5s ease-out;
+         }
+         /* Styling für Quellcode-Sektion */
+         #quellcode-section {
+             background-color: #1f2937; /* Dunklerer Hintergrund für Abgrenzung */
+             border: 1px solid #374151;
+             border-radius: 0.5rem;
          }
     </style>
 </head>
@@ -121,9 +131,8 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
-                <h2 class="text-xl font-semibold mb-3 text-indigo-300">Interaktives Gittermodell (Raumzeit)</h2>
+        <div class="space-y-8 mb-8"> <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
+                <h2 class="text-xl font-semibold mb-3 text-indigo-300 text-center">Interaktives Gittermodell (Raumzeit)</h2>
                 <div id="gittermodell-container">
                     <div id="zoom-info">Zoom: 1.0x | Modus: Standard | Λ(t)=0.75</div>
                     <div id="efficiency-info">Glättung: 25%</div> </div>
@@ -142,10 +151,12 @@
                 </div>
             </div>
 
-            <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
+            <div id="quellcode-section" class="bg-gray-800 p-4 rounded-lg shadow-lg">
                 <h2 class="text-xl font-semibold mb-3 text-indigo-300">Quellcode-Zoom (Konzept)</h2>
                 <p class="text-sm text-gray-400 mb-3">Simuliert die Änderung von Parametern auf fundamentaler Ebene.</p>
-                <pre><code id="pseudo-code" class="text-xs">class SpacetimeGrid:
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <pre><code id="pseudo-code" class="text-xs h-64 overflow-y-auto">class SpacetimeGrid:
     def __init__(self, size, planck_scale=1.616e-35):
         # Annahme: Cell() speichert Zustand & Entropie
         self.grid = [[Cell() for _ in range(size)] for _ in range(size)]
@@ -248,44 +259,40 @@
         print(f"Optimiere Glätte an ({x}, {y}): Zustand von {initial_state.toExponential(2)} zu {optimized_state.toExponential(2)} (Rauschen entfernt für Effizienz)")
         return current_cell.state
 
-    # UPDATE: Lambda(t) Anpassung mit Glättungsfaktor
     def adjust_dark_energy(self, lambda_t):
-        # Simuliert eine dynamische Dunkle Energie als Konfigurationswert
+        # ... (wie zuvor) ...
         if lambda_t < 0 or lambda_t > 1:
             print(f"Ungültiger Λ(t)-Wert: {lambda_t}, muss zwischen 0 und 1 liegen")
             return False
         old_lambda = self.dark_energy
         self.dark_energy = lambda_t
-        # Vereinfachte Kosmo-Simulation: Expansion skaliert mit lambda_t
         expansion_rate = self.c * lambda_t
-        # Glattheitseffekt: Niedrigeres Lambda erhöht Glätte (im Sinne von weniger Chaos/Rauschen)
-        smoothness_factor = 1 - lambda_t; # Höher bei niedrigem Lambda
+        smoothness_factor = 1 - lambda_t;
         print(f"Dunkle Energie angepasst: Λ(t) von {old_lambda.toFixed(2)} zu {lambda_t.toFixed(2)}, Expansion ≈ {expansion_rate.toExponential(2)} m/s, Optimierungsfaktor (1-Λ): {smoothness_factor.toFixed(2)}");
         return True
 
 # --- Pseudo-Code Ende ---
 </code></pre>
-                <div class="mt-4 space-y-2">
-                    <div>
-                        <label for="param-mass" class="text-sm font-medium">Simulierte Masse (in kg, für Entropie):</label>
-                        <input type="number" id="param-mass" value="1e15" step="1e14" class="w-full mt-1 bg-gray-700 border border-gray-600 rounded p-1 text-sm">
-                         <p class="text-xs text-gray-500">Beispiel: Sonnenmasse ≈ 2e30 kg</p>
                     </div>
-                    <div class="mt-2">
-                        <label for="param-spin" class="text-sm font-medium">Spin-Parameter (0=statisch, 1=maximal):</label>
-                        <input type="number" id="param-spin" value="0.5" min="0" max="1" step="0.1" class="w-full mt-1 bg-gray-700 border border-gray-600 rounded p-1 text-sm">
-                    </div>
-                    <button id="apply-code-params" class="text-xs bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded">Parameter Anwenden & Kerr-Entropie Berechnen</button>
-                     <p id="code-output" class="text-xs text-cyan-400 mt-2"></p>
-                     <div class="flex gap-2 mt-2 flex-wrap" id="test-buttons-container"> <button id="test-inv-square" class="text-xs bg-orange-600 hover:bg-orange-700 text-white py-1 px-3 rounded">Test 1/r² (30µm)</button>
-                         <button id="test-equiv" class="text-xs bg-orange-600 hover:bg-orange-700 text-white py-1 px-3 rounded">Test Äquivalenz</button>
-                         </div>
-                     <p id="torsion-output" class="text-xs text-amber-400 mt-2"></p>
+                    <div class="mt-4 md:mt-0 space-y-2">
+                        <div>
+                            <label for="param-mass" class="text-sm font-medium">Simulierte Masse (in kg, für Entropie):</label>
+                            <input type="number" id="param-mass" value="1e15" step="1e14" class="w-full mt-1 bg-gray-700 border border-gray-600 rounded p-1 text-sm">
+                             <p class="text-xs text-gray-500">Beispiel: Sonnenmasse ≈ 2e30 kg</p>
+                        </div>
+                        <div class="mt-2">
+                            <label for="param-spin" class="text-sm font-medium">Spin-Parameter (0=statisch, 1=maximal):</label>
+                            <input type="number" id="param-spin" value="0.5" min="0" max="1" step="0.1" class="w-full mt-1 bg-gray-700 border border-gray-600 rounded p-1 text-sm">
+                        </div>
+                        <button id="apply-code-params" class="text-xs bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded">Parameter Anwenden & Kerr-Entropie Berechnen</button>
+                         <p id="code-output" class="text-xs text-cyan-400 mt-2 h-10 overflow-y-auto"></p> <div class="flex gap-2 mt-2 flex-wrap" id="test-buttons-container"> <button id="test-inv-square" class="text-xs bg-orange-600 hover:bg-orange-700 text-white py-1 px-3 rounded">Test 1/r² (30µm)</button>
+                             <button id="test-equiv" class="text-xs bg-orange-600 hover:bg-orange-700 text-white py-1 px-3 rounded">Test Äquivalenz</button>
+                             </div>
+                         <p id="torsion-output" class="text-xs text-amber-400 mt-2 h-10 overflow-y-auto"></p> </div>
                 </div>
             </div>
-        </div>
 
-        <div id="score-area" class="bg-gray-800 p-6 rounded-lg shadow-lg transition-colors duration-500">
+        </div> <div id="score-area" class="bg-gray-800 p-6 rounded-lg shadow-lg transition-colors duration-500">
             <h2 class="text-xl font-semibold mb-4 text-indigo-300">Gesamtbewertung (Spekulativ)</h2>
             <div class="flex items-center gap-4">
                 <span class="text-sm font-medium">Simulations-Wahrscheinlichkeit:</span>
@@ -493,12 +500,14 @@
 
              // Hintergrundfarbe des Score-Bereichs basierend auf Lambda ändern (nur während Runback?)
              if (scoreArea && lambdaIntervalId) {
-                 const suspicionRatio = 1 - lambdaValue;
-                 const red = Math.round(3*16 + suspicionRatio * (15*16 + 7 - 3*16));
-                 const green = Math.round(4*16 + 1 - suspicionRatio * (4*16 + 1 - 2*16 + 11));
-                 const blue = Math.round(5*16 + 5 - suspicionRatio * (5*16 + 5 - 3*16 + 7));
-                 // Sanfter Übergang
-                 scoreArea.style.backgroundColor = `rgb(${red}, ${green}, ${blue})`;
+                 const suspicionRatio = 1 - lambdaValue; // 0 (Lambda=1) bis 1 (Lambda=0)
+                 // Interpoliere von Grau (rgb(31, 41, 55)) zu Rot (rgb(185, 28, 28) - tailwind red-700)
+                 const grayR = 31, grayG = 41, grayB = 55;
+                 const redR = 185, redG = 28, redB = 28;
+                 const r = Math.round(grayR + suspicionRatio * (redR - grayR));
+                 const g = Math.round(grayG + suspicionRatio * (redG - grayG));
+                 const b = Math.round(grayB + suspicionRatio * (redB - grayB));
+                 scoreArea.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
              } else if (scoreArea) {
                  // Reset zu Standard-Grau, wenn nicht im Runback
                  scoreArea.style.backgroundColor = 'rgb(31, 41, 55)'; // Tailwind gray-800
@@ -510,7 +519,7 @@
             const suspicionElement = document.getElementById('suspicion-level');
             if (!suspicionElement) return;
 
-            const currentSuspicion = calculateCurrentSuspicion();
+            const currentSuspicion = calculateCurrentSuspicion(); // Hole aktuellen Wert
 
             let suspicionText, suspicionColor;
             if (currentSuspicion >= 80) {
@@ -648,7 +657,6 @@
 
                 gridGroup.children.forEach(cube => {
                     let isHandledByMovementMode = (ctcActive && cube.userData.isCTC) || (kerrActive && cube.userData.isKerr);
-                    // Heatmap überschreibt alle anderen Erscheinungsmodi (Smooth, Foam, NonCom)
                     let isHandledByAppearanceMode = isHandledByMovementMode || heatmapActive || smoothActive;
 
                     // Start with current position (already scaled by Lambda)
@@ -662,7 +670,7 @@
 
                     // Glätte-Modus (überschreibt Basis-Aussehen & statische Position, wenn KEINE Heatmap)
                     if (smoothActive && !heatmapActive) {
-                        // NEU: Angepasste Glättungsformel für Opacity & Farbe
+                        // Angepasste Glättungsformel für Opacity & Farbe
                         const smoothnessFactor = Math.max(0, Math.min(1, (lambdaValue - 0.6) * 2.5)); // Wirkt erst ab 0.6
                         targetOpacity = 0.6 + smoothnessFactor * 0.3; // Opacity steigt mit Lambda > 0.6
                         targetColor = interpolateColor(0x3b82f6, 0x06b6d4, smoothnessFactor); // Interpoliert zu Cyan
@@ -713,6 +721,18 @@
                         targetX += deltaX;
                         targetZ += deltaX * 0.5;
                     }
+
+                    // NEU: Ewige Glätte bei Lambda < 0.1 im Smooth-Modus
+                    if (smoothActive && lambdaValue < 0.1) {
+                        targetX = cube.userData.originalX * 0.1; // Feste kleine Position
+                        targetY = cube.userData.baseY * 0.1;
+                        targetZ = cube.userData.originalZ * 0.1;
+                        targetColor = 0x06b6d4; // Cyan
+                        targetOpacity = 1.0; // Voll opak
+                        targetScale = 0.5; // Klein
+                        isHandledByAppearanceMode = true; // Überschreibt alles andere
+                    }
+
 
                     // Heatmap-Modus (überschreibt alle anderen Farben/Opacity, wenn aktiv)
                     if (heatmapActive) {
@@ -905,7 +925,7 @@
                 // Entropie mit Lambda(t) skalieren
                 entropy *= lambdaValue;
 
-                // Entropie extrem dämpfen, wenn Glätte aktiv ist (NEUE Logik)
+                // Entropie dämpfen, wenn Glätte aktiv ist (basierend auf Lambda)
                 if (smoothActive) {
                     const smoothnessFactor = Math.max(0, Math.min(1, (lambdaValue - 0.6) * 2.5)); // 0 bis 1
                     entropy *= (1 - smoothnessFactor * 0.999); // Dämpfung stark bei hohem Lambda (>0.6)
